@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+#!/usr/bin/env bash
+#
+
+# Copyright 2017 Google Inc.
+# Edited 2019 by Stefan Kürzeder
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[[ -n $DEBUG ]] && set -x
+
+set -eou pipefail
+
+SELF_CMD="$0"
+AZCTX="${AZURE_CONFIG_DIR}/azctx"
+
+usage() {
+    cat <<"EOF"
+USAGE:
+    azctx                       : list the contexts
+    azctx <NAME>                : switch to context <NAME>
+    azctx -                     : switch to the previous context
+    azctx -c, --current         : show the current context name
+    azctx <NEW_NAME>=<NAME>     : rename context <NAME> to <NEW_NAME>
+    azctx <NEW_NAME>=.          : rename current-context to <NEW_NAME>
+    azctx -d <NAME> [<NAME...>] : delete context <NAME> ('.' for current-context)
+                                    (this command won't delete the user/cluster entry
+                                    that is used by the context)
+    azctx -h,--help             : show this message
+EOF
+}
+
+get_contexts() {
+    jq -c '.subscriptions[]' $AZURE_CONFIG_DIR/azureProfile.json | while read i; do
+        echo $i | jq -r '.name'
+    done
+}
+
+read_context() {
+  if [[ -f "${AZCTX}" ]]; then
+    cat "${AZCTX}"
+  fi
+}
+
+list_contexts() {
+    set -u pipefail
+    local cur ctx_list
+    cur="$(current_context)" || exit_err "error getting current context"
+    ctx_list=$(get_contexts | sort -g) || exit_err "error getting context list"
+    #ctx_list=$(echo $ctx_list | xargs -n1 | sort -g | xargs)
+
+    local yellow darkbg normal
+    yellow=$(tput setaf 3 || true)
+    darkbg=$(tput setab 0 || true)
+    normal=$(tput sgr0 || true)
+
+    local cur_ctx_fg cur_ctx_bg
+    cur_ctx_fg=${yellow}
+    cur_ctx_bg=${darkbg}
+
+    while read -r c; do
+        # colored output mode
+        if [[ "${c}" = "${cur}" ]]; then
+            echo "${cur_ctx_bg}${cur_ctx_fg}${c}${normal}"
+        else
+            echo "${c}"
+        fi
+    done <<< "$ctx_list"
+}
+
+choose_context_interactive() {
+    local choice
+    choice="$(FZF_DEFAULT_COMMAND="${SELF_CMD}" \
+        fzf --ansi || true)"
+    if [[ -z "${choice}" ]]; then
+        echo 2>&1 "error: you did not choose any of the options"
+        exit 1
+    else
+        set_context "${choice}"
+    fi
+}
+
+current_context() {
+    jq -c '.subscriptions[]' $AZURE_CONFIG_DIR/azureProfile.json | while read i; do
+        if $(echo $i | jq -r '.isDefault') == 'true'; then
+            echo $i | jq -r '.name'
+            break
+        fi
+    done
+}
+
+save_context() {
+  local saved
+  saved="$(current_context)"
+
+  if [[ "${saved}" != "${1}" ]]; then
+    echo "Switched to context \"${saved}\""
+    printf %s "${1}" > "${AZCTX}"
+  fi
+}
+
+switch_context() {
+  $AZCLI account set --subscription "${1}"
+}
+
+set_context() {
+    local prev
+    prev="$(current_context)" || exit_err "error getting current context"
+
+    switch_context "${1}"
+
+    if [[ "${prev}" != "${1}" ]]; then
+        save_context "${prev}"
+    fi
+}
+
+swap_context() {
+    local ctx
+    ctx="$(read_context)"
+    if [[ -z "${ctx}" ]]; then
+        echo "error: No previous context found." >&2
+        exit 1
+    fi
+    set_context "${ctx}"
+}
+
+main() {
+    if hash az 2>/dev/null; then
+        AZCLI=az
+    else
+        echo >&2 "azure cli is not installed"
+        exit 1
+    fi
+
+    if [ ! -f "$AZURE_CONFIG_DIR/azureProfile.json" ]; then
+        echo "$AZURE_CONFIG_DIR/azureProfile.json not found. Please re-/install the Azure CLI."
+        exit
+    fi
+
+    if [[ "$#" -eq 0 ]]; then
+        if [[ -t 1 && "$(type fzfa &>/dev/null; echo $?)" -eq 0 ]]; then
+            choose_context_interactive
+        else
+            list_contexts
+        fi
+    elif [[ "$#" -gt 1 ]]; then
+        echo "error: too many arguments" >&2
+        usage
+        exit 1
+    elif [[ "$#" -eq 1 ]]; then
+        if [[ "${1}" == "-" ]]; then
+            swap_context
+        # elif [[ "${1}" == '-c' || "${1}" == '--current' ]]; then
+        #     # we don't call current_context here for two reasons:
+        #     # - it does not fail when current-context property is not set
+        #     # - it does not return a trailing newline
+        #     kubectl config current-context
+        elif [[ "${1}" == '-h' || "${1}" == '--help' ]]; then
+            usage
+        elif [[ "${1}" =~ ^-(.*) ]]; then
+            echo "error: unrecognized flag \"${1}\"" >&2
+            usage
+            exit 1
+        elif [[ "${1}" =~ (.+)=(.+) ]]; then
+            rename_context "${BASH_REMATCH[2]}" "${BASH_REMATCH[1]}"
+        else
+            set_context "${1}"
+        fi
+    else
+        usage
+    fi
+}
+
+main "$@"
