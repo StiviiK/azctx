@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#!/usr/bin/env bash
 #
 
 # Copyright 2017 Google Inc.
@@ -38,6 +37,11 @@ USAGE:
                                     that is used by the context)
     azctx -h,--help             : show this message
 EOF
+}
+
+exit_err() {
+   echo >&2 "${1}"
+   exit 1
 }
 
 get_contexts() {
@@ -148,7 +152,7 @@ main() {
     fi
 
     if [[ "$#" -eq 0 ]]; then
-        if [[ -t 1 && "$(type fzfa &>/dev/null; echo $?)" -eq 0 ]]; then
+        if [[ -t 1 && "$(type fzf &>/dev/null; echo $?)" -eq 0 ]]; then
             choose_context_interactive
         else
             list_contexts
@@ -160,11 +164,11 @@ main() {
     elif [[ "$#" -eq 1 ]]; then
         if [[ "${1}" == "-" ]]; then
             swap_context
-        # elif [[ "${1}" == '-c' || "${1}" == '--current' ]]; then
-        #     # we don't call current_context here for two reasons:
-        #     # - it does not fail when current-context property is not set
-        #     # - it does not return a trailing newline
-        #     kubectl config current-context
+        elif [[ "${1}" == '-c' || "${1}" == '--current' ]]; then
+            # we don't call current_context here for two reasons:
+            # - it does not fail when current-context property is not set
+            # - it does not return a trailing newline
+            $AZCLI account show -o table
         elif [[ "${1}" == '-h' || "${1}" == '--help' ]]; then
             usage
         elif [[ "${1}" =~ ^-(.*) ]]; then
