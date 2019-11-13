@@ -26,15 +26,11 @@ AZCTX="${AZURE_CONFIG_DIR}/azctx"
 usage() {
     cat <<"EOF"
 USAGE:
-    azctx                       : list the contexts
-    azctx <NAME>                : switch to context <NAME>
-    azctx -                     : switch to the previous context
-    azctx -c, --current         : show the current context name
-    azctx <NEW_NAME>=<NAME>     : rename context <NAME> to <NEW_NAME>
-    azctx <NEW_NAME>=.          : rename current-context to <NEW_NAME>
-    azctx -d <NAME> [<NAME...>] : delete context <NAME> ('.' for current-context)
-                                    (this command won't delete the user/cluster entry
-                                    that is used by the context)
+    azctx                       : list the subscription
+    azctx <NAME>                : switch to subscription <NAME>
+    azctx -                     : switch to the previous subscription
+    azctx -c, --current         : show the subscription name
+    azctx -r, --refresh         : re-login and fetch all subscriptions
     azctx -h,--help             : show this message
 EOF
 }
@@ -108,7 +104,7 @@ save_context() {
   saved="$(current_context)"
 
   if [[ "${saved}" != "${1}" ]]; then
-    echo "Switched to context \"${saved}\""
+    echo "Switched to subscription \"${saved}\""
     printf %s "${1}" > "${AZCTX}"
   fi
 }
@@ -119,7 +115,7 @@ switch_context() {
 
 set_context() {
     local prev
-    prev="$(current_context)" || exit_err "error getting current context"
+    prev="$(current_context)" || exit_err "error getting current subscription"
 
     switch_context "${1}"
 
@@ -132,7 +128,7 @@ swap_context() {
     local ctx
     ctx="$(read_context)"
     if [[ -z "${ctx}" ]]; then
-        echo "error: No previous context found." >&2
+        echo "error: No previous subscription found." >&2
         exit 1
     fi
     set_context "${ctx}"
@@ -144,6 +140,11 @@ main() {
     else
         echo >&2 "azure cli is not installed"
         exit 1
+    fi
+
+    if [ -z ${AZURE_CONFIG_DIR+x} ]; then
+        echo "Environment AZURE_CONFIG_DIR is not set. Please see the troubleshooting section in the readme."
+        exit
     fi
 
     if [ ! -f "$AZURE_CONFIG_DIR/azureProfile.json" ]; then
@@ -165,18 +166,15 @@ main() {
         if [[ "${1}" == "-" ]]; then
             swap_context
         elif [[ "${1}" == '-c' || "${1}" == '--current' ]]; then
-            # we don't call current_context here for two reasons:
-            # - it does not fail when current-context property is not set
-            # - it does not return a trailing newline
             $AZCLI account show -o table
+        elif [[ "${1}" == '-r' || "${1}" == '--refresh' ]]; then
+            $AZCLI login -o table
         elif [[ "${1}" == '-h' || "${1}" == '--help' ]]; then
             usage
         elif [[ "${1}" =~ ^-(.*) ]]; then
             echo "error: unrecognized flag \"${1}\"" >&2
             usage
             exit 1
-        elif [[ "${1}" =~ (.+)=(.+) ]]; then
-            rename_context "${BASH_REMATCH[2]}" "${BASH_REMATCH[1]}"
         else
             set_context "${1}"
         fi
