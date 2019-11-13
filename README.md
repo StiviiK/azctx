@@ -1,4 +1,4 @@
-# `azctx`: Power tool for Azure CLI
+# `azctx`: Power tool for the Azure CLI
 
 #### Note: This repository is heavily orientated on [kubectx](https://github.com/ahmetb/kubectx). Most of the source code is from the original author of `kubectx`.
 
@@ -80,7 +80,7 @@ with fuzzy searching, you just need to [install
 
 ![azctx interactive search with fzf](img/azctx-interactive.gif)
 
-If you have `fzf` installed, but want to opt out of using this feature, set the environment variable `KUBECTX_IGNORE_FZF=1`.
+If you have `fzf` installed, but want to opt out of using this feature, set the environment variable `AZCTX_IGNORE_FZF=1`.
 
 ---
 
