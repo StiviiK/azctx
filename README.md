@@ -15,10 +15,12 @@ azctx is a utility to switch between azure subscriptions.
 
 ```
 USAGE:
-  azctx                   : list the contexts
-  azctx <NAME>            : switch to context <NAME>
-  azctx -                 : switch to the previous context
-  azctx -c, --current     : show the current context name
+  azctx                       : list the subscriptions
+  azctx <NAME>                : switch to subscription <NAME>
+  azctx -                     : switch to the previous subscription
+  azctx -c, --current         : show the subscription name
+  azctx -r, --refresh         : re-login and fetch all subscriptions
+  azctx -h,--help             : show this message
 ```
 
 ### Usage
@@ -34,8 +36,8 @@ $ kubectx -
 Switched to context "mvp".
 ```
 
-`kubectx` supports <kbd>Tab</kbd> completion on bash/zsh/fish shells to help with
-long context names. You don't have to remember full context names anymore.
+`azctx` supports <kbd>Tab</kbd> completion on bash/zsh/fish shells to help with
+long context names. You don't have to remember full context names anymore. (WIP)
 
 -----
 
@@ -72,11 +74,11 @@ AZURE_CONFIG_DIR=$HOME/.azure
 
 ### Interactive mode
 
-If you want `kubectx` and `kubens` commands to present you an interactive menu
+If you want `azctx` command to present you an interactive menu
 with fuzzy searching, you just need to [install
 `fzf`](https://github.com/junegunn/fzf) in your PATH.
 
-![kubectx interactive search with fzf](img/kubectx-interactive.gif)
+![azctx interactive search with fzf](img/azctx-interactive.gif)
 
 If you have `fzf` installed, but want to opt out of using this feature, set the environment variable `KUBECTX_IGNORE_FZF=1`.
 

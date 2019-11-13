@@ -26,7 +26,7 @@ AZCTX="${AZURE_CONFIG_DIR}/azctx"
 usage() {
     cat <<"EOF"
 USAGE:
-    azctx                       : list the subscription
+    azctx                       : list the subscriptions
     azctx <NAME>                : switch to subscription <NAME>
     azctx -                     : switch to the previous subscription
     azctx -c, --current         : show the subscription name
