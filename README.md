@@ -29,10 +29,10 @@ USAGE:
 $ azctx mvp
 Switched to context "mvp"
 
-$ kubectx -
+$ azctx -
 Switched to context "workshop".
 
-$ kubectx -
+$ azctx -
 Switched to context "mvp".
 ```
 
