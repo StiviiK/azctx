@@ -2,7 +2,7 @@
 
 #### Note: This repository is heavily orientated on [kubectx](https://github.com/ahmetb/kubectx). Most of the source code is from the original author of `kubectx`.
 
-![Latest GitHub release](https://img.shields.io/github/release/stiviik/azctx.svg)
+![Latest GitHub release](https://img.shields.io/github/v/release/StiviiK/azctx.svg)
 ![GitHub stars](https://img.shields.io/github/stars/stiviik/azctx.svg?label=github%20stars)
 ![Proudly written in Bash](https://img.shields.io/badge/written%20in-bash-ff69b4.svg)
 
