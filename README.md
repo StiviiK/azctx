@@ -42,6 +42,11 @@ long context names. You don't have to remember full context names anymore. (WIP)
 -----
 
 ## Installation
+### Homebrew
+```
+brew tap stiviik/tap
+brew install azctx
+```
 
 ### Linux
 
@@ -67,7 +72,7 @@ sudo ln -s /opt/azctx/azctx /usr/local/bin/azctx
 Find in the [Microsoft Documentation](https://docs.microsoft.com/en-us/cli/azure/azure-cli-configuration?view=azure-cli-latest#cli-configuration-file) the correct path to the azure cli config directory and set in manualy.  
 For example set it in your `~/.bashrc`:
 ```
-AZURE_CONFIG_DIR=$HOME/.azure
+export AZURE_CONFIG_DIR=$HOME/.azure
 ```
 
 -----
