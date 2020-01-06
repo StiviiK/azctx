@@ -75,6 +75,8 @@ For example set it in your `~/.bashrc`:
 export AZURE_CONFIG_DIR=$HOME/.azure
 ```
 
+Run once `az configure` to create the configuration directory.
+
 -----
 
 ### Interactive mode
