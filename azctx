@@ -22,6 +22,7 @@ set -eou pipefail
 
 SELF_CMD="$0"
 AZCTX="${AZURE_CONFIG_DIR}/azctx"
+AZCTX_CURRENT_CONTEXT="${AZURE_CONFIG_DIR}/azctx_current_context"
 
 usage() {
     cat <<"EOF"
@@ -106,6 +107,7 @@ save_context() {
   if [[ "${saved}" != "${1}" ]]; then
     echo "Switched to subscription \"${saved}\""
     printf %s "${1}" > "${AZCTX}"
+    printf %s "${saved}" > "${AZCTX_CURRENT_CONTEXT}"
   fi
 }
 
