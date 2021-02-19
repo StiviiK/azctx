@@ -67,6 +67,21 @@ sudo git clone https://github.com/StiviiK/azctx /opt/azctx
 sudo ln -s /opt/azctx/azctx /usr/local/bin/azctx
 ```
 
+### ASDF
+
+You can install `azctx` using the [asdf](https://github.com/asdf-vm/asdf) version manager.
+
+```
+asdf plugin-add azctx https://github.com/janpieper/asdf-azctx.git
+asdf install azctx <version>
+```
+
+To find out the available versions to install, you can run the follwowing command:
+
+```
+asdf list-all azctx
+```
+
 ## Troubleshooting
 ### `AZURE_CONFIG_DIR` is not set
 Find in the [Microsoft Documentation](https://docs.microsoft.com/en-us/cli/azure/azure-cli-configuration?view=azure-cli-latest#cli-configuration-file) the correct path to the azure cli config directory and set in manualy.  
