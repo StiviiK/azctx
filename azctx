@@ -43,7 +43,9 @@ exit_err() {
 
 get_contexts() {
     jq -c '.subscriptions[]' $AZURE_CONFIG_DIR/azureProfile.json | while read i; do
-        echo $i | jq -r '.name'
+            name=$(echo $i | jq -r '.name')
+            subscription=$(echo $i | jq -r '.id')
+            echo "$name [$subscription]"
     done
 }
 
@@ -71,7 +73,8 @@ list_contexts() {
 
     while read -r c; do
         # colored output mode
-        if [[ "${c}" = "${cur}" ]]; then
+        id=$(echo $c | cut -d "[" -f2 | cut -d "]" -f1)
+        if [[ "${id}" = "${cur}" ]]; then
             echo "${cur_ctx_bg}${cur_ctx_fg}${c}${normal}"
         else
             echo "${c}"
@@ -87,14 +90,14 @@ choose_context_interactive() {
         echo 2>&1 "error: you did not choose any of the options"
         exit 1
     else
-        set_context "${choice}"
+        set_context "$(echo $choice | cut -d "[" -f2 | cut -d "]" -f1)"
     fi
 }
 
 current_context() {
     jq -c '.subscriptions[]' $AZURE_CONFIG_DIR/azureProfile.json | while read i; do
         if $(echo $i | jq -r '.isDefault') == 'true'; then
-            echo $i | jq -r '.name'
+            echo $i | jq -r '.id'
             break
         fi
     done
