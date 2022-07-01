@@ -38,7 +38,7 @@ brews:
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     folder: Formula
     homepage: "https://githubs.com/StiviiK/azctx"
-    description: "Software to create fast and easy drum rolls."
+    description: "Switch faster between subscriptions in your azure cli."
     license: "MIT"
     install: |
       bin.install "azctx"
