@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"os/exec"
 )
 
@@ -15,8 +14,6 @@ func IsCommandInstalled(name string) bool {
 func ExecuteCommand(name string, args ...string) (string, error) {
 	cmd := exec.Command(name, args...)
 	output, err := cmd.Output()
-
-	fmt.Printf("%s\n", output)
 
 	if err != nil {
 		return "", err

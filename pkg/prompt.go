@@ -21,16 +21,17 @@ func BuildPrompt(subscriptions []Subscription) promptui.Select {
 		Templates:    buildTemplate(maxContextLength),
 		HideSelected: true,
 		Searcher: func(input string, index int) bool {
-			return fuzzy.Match(input, subscriptionNames[index])
+			return fuzzy.MatchNormalized(strings.ToLower(input), strings.ToLower(subscriptionNames[index]))
 		},
 		Size: int(utils.Min(len(subscriptions), 10)),
 	}
 }
 
 func buildTemplate(maxContextLength int) *promptui.SelectTemplates {
+	itemTemplate := fmt.Sprintf(`  {{ repeat %[1]d " " | print .Name | trunc %[1]d | green | %[2]s }} | {{ repeat 36 " " | print .ID | trunc 36 | cyan | %[2]s }} | {{ repeat 36 " " | print .Tenant | trunc 36 | faint | %[2]s }} |`, maxContextLength, "")
 	return &promptui.SelectTemplates{
-		Inactive: fmt.Sprintf(`  {{ repeat %[1]d " " | print .Name | trunc %[1]d | %[2]s }} | {{ repeat 36 " " | print .ID | trunc 36 | %[2]s }} | {{ repeat 36 " " | print .Tenant | trunc 36 | %[2]s }} |`, maxContextLength, ""),
-		Active:   fmt.Sprintf(`▸ {{ repeat %[1]d " " | print .Name | trunc %[1]d | %[2]s }} | {{ repeat 36 " " | print .ID | trunc 36 | %[2]s }} | {{ repeat 36 " " | print .Tenant | trunc 36 | %[2]s }} |`, maxContextLength, "bold | cyan"),
+		Inactive: itemTemplate,
+		Active:   "▸ " + itemTemplate[2:],
 		FuncMap:  newTemplateFuncMap(),
 	}
 }

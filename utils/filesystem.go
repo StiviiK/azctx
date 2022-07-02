@@ -2,7 +2,8 @@ package utils
 
 import "os"
 
-func IsFileExists(path string) bool {
+// FileExists checks if a file exists
+func FileExists(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
 }
