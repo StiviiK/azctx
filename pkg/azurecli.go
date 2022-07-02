@@ -18,9 +18,10 @@ type AzureProfilesConfig struct {
 }
 
 type Subscription struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Tenant string `json:"tenantId"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Tenant    string `json:"tenantId"`
+	IsDefault bool   `json:"isDefault"`
 }
 
 const (
@@ -97,16 +98,28 @@ func SetActiveSubscription(subscription Subscription) error {
 	return nil
 }
 
-// GetAzureSubscriptionByName returns the azure subscription with the given name
-func GetAzureSubscriptionByName(profilesConfig AzureProfilesConfig, subscriptionName string) Subscription {
-	// Find the subscription with the given name
+// GetActiveSubscription returns the active subscription
+func GetActiveSubscription(profilesConfig AzureProfilesConfig) (Subscription, error) {
+	// select the subscription with the is default flag set to true
 	for _, subscription := range profilesConfig.Subscriptions {
-		if subscription.Name == subscriptionName {
-			return subscription
+		if subscription.IsDefault {
+			return subscription, nil
 		}
 	}
 
-	return Subscription{}
+	return Subscription{}, errors.New("no active subscription found")
+}
+
+// GetAzureSubscriptionByName returns the azure subscription with the given name
+func GetAzureSubscriptionByName(profilesConfig AzureProfilesConfig, subscriptionName string) (Subscription, bool) {
+	// Find the subscription with the given name
+	for _, subscription := range profilesConfig.Subscriptions {
+		if strings.EqualFold(subscription.Name, subscriptionName) {
+			return subscription, true
+		}
+	}
+
+	return Subscription{}, false
 }
 
 // TryFindAzureSubscription fuzzy searches for the azure subscription in the given AzureProfilesConfig
@@ -119,13 +132,17 @@ func TryFindAzureSubscription(profilesConfig AzureProfilesConfig, subscriptionNa
 		return nil, fmt.Errorf("no azure subscription found for %s", subscriptionName)
 	case 1:
 		// One result found
-		return []Subscription{GetAzureSubscriptionByName(profilesConfig, results[0])}, nil
+		s, ok := GetAzureSubscriptionByName(profilesConfig, results[0])
+		if !ok {
+			return nil, fmt.Errorf("no azure subscription found for %s", subscriptionName)
+		}
+		return []Subscription{s}, nil
 	default:
 		// Multiple results found
 		subscriptions := make([]Subscription, len(results))
 		for i, result := range results {
-			s := GetAzureSubscriptionByName(profilesConfig, result)
-			if (s != Subscription{}) {
+			s, ok := GetAzureSubscriptionByName(profilesConfig, result)
+			if ok {
 				subscriptions[i] = s
 			}
 		}

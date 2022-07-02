@@ -1,41 +1,29 @@
 # `azctx`: Power tool for the Azure CLI
 
+![Proudly written in Go](https://img.shields.io/badge/written%20in-go-29BEB0.svg)
 ![Latest GitHub release](https://img.shields.io/github/v/release/StiviiK/azctx.svg)
 ![GitHub stars](https://img.shields.io/github/stars/stiviik/azctx.svg?label=github%20stars)
-![Proudly written in Go](https://img.shields.io/badge/written%20in-go-29BEB0.svg)
+![GitHub contributors](https://img.shields.io/github/contributors/stiviik/azctx.svg?label=github%20contributors)
 
-**`azctx`** helps you switch between subscriptions back and forth:
+**`azctx`** helps you switch between azure cli subscriptions back and forth:
 ![azctx demo GIF](img/azctx-demo.gif)
 
 # azctx(1)
 
-azctx is a utility to switch between azure subscriptions.
+```bash
+azctx is a CLI tool for managing azure cli subscriptions.
+	It is a helper for the azure cli and provides a simple interface for managing subscriptions.
+	Pass a subscription name to select a specific subscription.
+	Pass - to switch to the previous subscription.
 
+Usage:
+  azctx [- / NAME] [flags]
+
+Flags:
+  -c, --current   Display the current active subscription
+  -h, --help      help for azctx
+  -r, --refresh   Re-Authenticate and refresh the subscriptions
 ```
-USAGE:
-  azctx                       : list the subscriptions
-  azctx <NAME>                : switch to subscription <NAME>
-  azctx -                     : switch to the previous subscription
-  azctx -c, --current         : show the subscription name
-  azctx -r, --refresh         : re-login and fetch all subscriptions
-  azctx -h,--help             : show this message
-```
-
-### Usage
-
-```sh
-$ azctx mvp
-Switched to context "mvp"
-
-$ azctx -
-Switched to context "workshop".
-
-$ azctx -
-Switched to context "mvp".
-```
-
-`azctx` supports <kbd>Tab</kbd> completion on bash/zsh/fish shells to help with
-long context names. You don't have to remember full context names anymore. (WIP)
 
 -----
 
@@ -43,26 +31,30 @@ long context names. You don't have to remember full context names anymore. (WIP)
 
 ### Homebrew
 
-```
-brew install stiviik/tap/azctx
-```
+* Install `azctx` with `brew install stiviik/tap/azctx`
 
 ### Linux
 
-TODO
+* Install the `azctx` binary from the [repository](https://github.com/StiviiK/azctx/releases)
+* Add the `azctx` binary to your PATH
 
 -----
+
 ## Troubleshooting
-### `AZURE_CONFIG_DIR` is not set
-Find in the [Microsoft Documentation](https://docs.microsoft.com/en-us/cli/azure/azure-cli-configuration?view=azure-cli-latest#cli-configuration-file) the correct path to the azure cli config directory and set in manualy.  
-For example set it in your `~/.bashrc`:
-```
-export AZURE_CONFIG_DIR=$HOME/.azure
-```
+
+### Error: `AZURE_CONFIG_DIR is not set / a valid directory. [...]`
 
 Run once `az configure` to create the configuration directory.
 
------
-#### Stargazers over time
+Check the [Microsoft Documentation](https://docs.microsoft.com/en-us/cli/azure/azure-cli-configuration?view=azure-cli-latest#cli-configuration-file) for the correct path to the azure cli config directory and export it as AZURE_CONFIG_DIR environment variable.  
 
-[![Stargazers over time](https://starcharts.herokuapp.com/stiviik/azctx.svg)](https://starcharts.herokuapp.com/stiviik/azctx)
+```bash
+export AZURE_CONFIG_DIR=$HOME/.azure
+```
+
+-----
+
+## Todos
+
+* [ ] Remove dependency on `azure-cli`  
+* [ ] Implement Unit Tests

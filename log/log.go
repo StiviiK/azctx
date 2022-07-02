@@ -13,9 +13,9 @@ var loggerE *log.Logger
 // InitLogger initializes a new logger
 // Initialization must be done, before logging funcs can be called
 func InitLogger(info, warn io.Writer, err io.Writer) {
-	loggerI = log.New(info, "I: ", 0)
-	loggerW = log.New(warn, "W: ", 0)
-	loggerE = log.New(err, "E: ", 0)
+	loggerI = log.New(info, "Info: ", 0)
+	loggerW = log.New(warn, "Warn: ", 0)
+	loggerE = log.New(err, "Error: ", 0)
 }
 
 // Info prints the supplied format string using the Info logger
