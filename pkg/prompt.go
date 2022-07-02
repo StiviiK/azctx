@@ -3,26 +3,43 @@ package pkg
 import (
 	"fmt"
 	"strings"
+	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
+	"github.com/StiviiK/azctx/utils"
+	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
 )
 
-const (
-	maxContextLength = 25
-)
+func BuildPrompt(subscriptions []Subscription) promptui.Select {
+	subscriptionNames := GetAzureSubscriptionNames(subscriptions)
+	maxContextLength := utils.GetLongestStringLength(subscriptionNames)
 
-func BuildPrompt() promptui.Select {
 	return promptui.Select{
-		Label:     "Select the Azure Subscription you want to use",
-		Items:     []string{"Subscription 1", "Subscription 2", "Subscription 3"},
-		Templates: buildTemplate(),
+		Label:        fmt.Sprint("  Name" + strings.Repeat(" ", maxContextLength-4) + " | " + "ID" + strings.Repeat(" ", 36-2) + " | " + "Tenant" + strings.Repeat(" ", 36-6) + " "),
+		Items:        subscriptions,
+		Templates:    buildTemplate(maxContextLength),
+		HideSelected: true,
+		Searcher: func(input string, index int) bool {
+			return fuzzy.Match(input, subscriptionNames[index])
+		},
+		Size: int(utils.Min(len(subscriptions), 10)),
 	}
 }
 
-func buildTemplate() *promptui.SelectTemplates {
+func buildTemplate(maxContextLength int) *promptui.SelectTemplates {
 	return &promptui.SelectTemplates{
-		//Inactive: fmt.Sprintf(`  {{ repeat %[1]d " " | print .Context | trunc %[1]d | %[2]s }} | {{ repeat %[1]d " " | print .Cluster | trunc %[1]d | %[2]s }} | {{ repeat %[1]d  " " | print .File | trunc %[1]d | %[2]s }} |`, maxContextLength, ""),
-		//Active:   fmt.Sprintf(`▸ {{ repeat %[1]d " " | print .Context | trunc %[1]d | %[2]s }} | {{ repeat %[1]d " " | print .Cluster | trunc %[1]d | %[2]s }} | {{ repeat %[1]d  " " | print .File | trunc %[1]d | %[2]s }} |`, maxContextLength, "bold | cyan"),
-		Label: fmt.Sprint("  Name" + strings.Repeat(" ", maxContextLength-7) + " | " + "ID" + strings.Repeat(" ", maxContextLength-7) + " | " + "Tenant" + strings.Repeat(" ", maxContextLength-4) + " "),
+		Inactive: fmt.Sprintf(`  {{ repeat %[1]d " " | print .Name | trunc %[1]d | %[2]s }} | {{ repeat 36 " " | print .ID | trunc 36 | %[2]s }} | {{ repeat 36 " " | print .Tenant | trunc 36 | %[2]s }} |`, maxContextLength, ""),
+		Active:   fmt.Sprintf(`▸ {{ repeat %[1]d " " | print .Name | trunc %[1]d | %[2]s }} | {{ repeat 36 " " | print .ID | trunc 36 | %[2]s }} | {{ repeat 36 " " | print .Tenant | trunc 36 | %[2]s }} |`, maxContextLength, "bold | cyan"),
+		FuncMap:  newTemplateFuncMap(),
 	}
+}
+
+func newTemplateFuncMap() template.FuncMap {
+	ret := sprig.TxtFuncMap()
+	ret["green"] = promptui.Styler(promptui.FGGreen)
+	ret["cyan"] = promptui.Styler(promptui.FGCyan)
+	ret["bold"] = promptui.Styler(promptui.FGBold)
+	ret["faint"] = promptui.Styler(promptui.FGFaint)
+	return ret
 }

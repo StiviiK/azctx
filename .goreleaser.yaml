@@ -31,6 +31,8 @@ brews:
       owner: stiviik
       name: homebrew-tap
       branch: master
+    dependencies:
+      - azure-cli
     url_template: "https://github.com/StiviiK/azctx/releases/{{ .Tag }}/{{ .ArtifactName }}"
     commit_author:
       name: Stefan Kürzeder
