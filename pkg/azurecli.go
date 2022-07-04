@@ -14,17 +14,6 @@ import (
 	"github.com/spf13/afero"
 )
 
-type AzureProfilesConfig struct {
-	Subscriptions []Subscription `json:"subscriptions"`
-}
-
-type Subscription struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Tenant    string `json:"tenantId"`
-	IsDefault bool   `json:"isDefault"`
-}
-
 const (
 	AzureCLI_Command      = "az"
 	AzureCLI_ConfigDirEnv = "AZURE_CONFIG_DIR"

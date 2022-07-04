@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -13,6 +14,10 @@ import (
 
 // BuildPrompt builds a prompt for the user to select a subscription
 func BuildPrompt(subscriptions []Subscription) promptui.Select {
+	// Sort the subscriptions by name
+	sort.Sort(subscriptionSorter(subscriptions))
+
+	// Build the prompt
 	subscriptionNames := GetAzureSubscriptionNames(subscriptions)
 	maxContextLength := utils.GetLongestStringLength(subscriptionNames)
 
