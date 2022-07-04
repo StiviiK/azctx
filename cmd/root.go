@@ -6,6 +6,7 @@ import (
 
 	"github.com/StiviiK/azctx/log"
 	"github.com/StiviiK/azctx/pkg"
+	"github.com/StiviiK/azctx/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +19,7 @@ var rootCmd = &cobra.Command{
 	Pass a subscription name to select a specific subscription.
 	Pass - to switch to the previous subscription.`,
 	SilenceUsage: true,
-	RunE:         cobraRunE,
+	Run:          utils.WrapCobraCommandHandler(cobraRunE),
 	ValidArgs:    []string{"-", "NAME"},
 }
 
