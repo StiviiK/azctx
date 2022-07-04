@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/StiviiK/azctx/log"
 	"github.com/StiviiK/azctx/utils"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/spf13/afero"
@@ -43,12 +44,13 @@ func ReadAzureProfilesConfigFile(fs afero.Fs) (afero.File, error) {
 	// Verify that the AZURE_CONFIG_DIR environment variable is set
 	configDir := os.Getenv(AzureCLI_ConfigDirEnv)
 	if configDir == "" {
-		return nil, errors.New("AZURE_CONFIG_DIR is not set. Please create it and try again")
+		log.Warn("AZURE_CONFIG_DIR environment variable is not set. Using default config directory.")
+		configDir = os.Getenv("HOME") + "/.azure"
 	}
 
 	// Verify that the config dir exists
 	if !utils.FileExists(configDir) {
-		return nil, errors.New("AZURE_CONFIG_DIR is not a valid directory. Please run `az configure` and try again")
+		return nil, fmt.Errorf("AZURE_CONFIG_DIR (%s) is not a valid directory. Please run `az configure` and try again", configDir)
 	}
 
 	// Verify that the azureProfile.json file exists
