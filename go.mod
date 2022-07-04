@@ -3,6 +3,7 @@ module github.com/StiviiK/azctx
 go 1.18
 
 require (
+	github.com/kpango/glg v1.6.11
 	github.com/lithammer/fuzzysearch v1.1.5
 	github.com/manifoldco/promptui v0.9.0
 	github.com/spf13/afero v1.8.2
@@ -12,7 +13,9 @@ require (
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
+	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/kpango/fastime v1.1.4 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

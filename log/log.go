@@ -2,37 +2,35 @@ package log
 
 import (
 	"io"
-	"log"
 	"os"
+
+	"github.com/kpango/glg"
 )
 
-var loggerI *log.Logger
-var loggerW *log.Logger
-var loggerE *log.Logger
+var logger *glg.Glg
 
 // InitLogger initializes a new logger
 // Initialization must be done, before logging funcs can be called
-func InitLogger(info, warn io.Writer, err io.Writer) {
-	loggerI = log.New(info, "Info: ", 0)
-	loggerW = log.New(warn, "Warn: ", 0)
-	loggerE = log.New(err, "Error: ", 0)
+func InitLogger(output io.Writer) {
+	logger = glg.New()
+	logger.SetWriter(output)
 }
 
 // Info prints the supplied format string using the Info logger
 func Info(format string, v ...interface{}) {
-	loggerI.Printf(format, v...)
+	logger.Infof(format, v...)
 }
 
 // Warn prints the supplied format string using the Warn logger
 func Warn(format string, v ...interface{}) {
-	loggerW.Printf(format, v...)
+	logger.Warnf(format, v...)
 }
 
 // Error prints the supplied format string using the Error logger
 func Error(format string, v ...interface{}) {
-	loggerE.Printf(format, v...)
+	logger.Errorf(format, v...)
 }
 
 func init() {
-	InitLogger(os.Stderr, os.Stderr, os.Stderr)
+	InitLogger(os.Stderr)
 }
