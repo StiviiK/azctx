@@ -79,7 +79,10 @@ func interactivelySelectSubscription(profilesConfig pkg.AzureProfilesConfig) err
 
 	// Set the selected subscription as the default
 	log.Info("Setting active subscription to %s (%s)", subscriptions[idx].Name, subscriptions[idx].ID)
-	pkg.SetActiveSubscription(subscriptions[idx])
+	err = pkg.SetActiveSubscription(subscriptions[idx])
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -108,7 +111,10 @@ func selectSubscriptionByName(profilesConfig pkg.AzureProfilesConfig, name strin
 
 	// Set the selected subscription as the default
 	log.Info("Setting active subscription to %s (%s)", subscription.Name, subscription.ID)
-	pkg.SetActiveSubscription(subscription)
+	err = pkg.SetActiveSubscription(subscription)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
