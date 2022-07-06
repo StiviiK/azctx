@@ -6,7 +6,8 @@
 ![GitHub contributors](https://img.shields.io/github/contributors/stiviik/azctx.svg?label=github%20contributors)
 
 **`azctx`** helps you switch between azure cli subscriptions back and forth:
-![azctx demo GIF](img/azctx-demo.gif)
+
+![azctx demo GIF](img/azctx-demo.png)
 
 # azctx(1)
 
