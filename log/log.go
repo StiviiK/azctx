@@ -4,16 +4,16 @@ import (
 	"io"
 	"os"
 
-	"github.com/kpango/glg"
+	"github.com/sirupsen/logrus"
 )
 
-var logger *glg.Glg
+var logger *logrus.Logger
 
 // InitLogger initializes a new logger
 // Initialization must be done, before logging funcs can be called
 func InitLogger(output io.Writer) {
-	logger = glg.New()
-	logger.SetWriter(output)
+	logger = logrus.New()
+	logger.SetOutput(output)
 }
 
 // Info prints the supplied format string using the Info logger
