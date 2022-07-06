@@ -22,7 +22,7 @@ const (
 
 func EnsureAzureCLI() error {
 	if !utils.IsCommandInstalled(AzureCLI_Command) {
-		return errors.New("azure cli is not installed. Please install it and try again.\nhttps://docs.microsoft.com/en-us/cli/azure/install-azure-cli")
+		return errors.New("azure cli is not installed. please install it and try again. See here: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli")
 	}
 
 	return nil
@@ -81,7 +81,7 @@ func GetAzureProfileConfig(profilesConfigFile afero.File) (AzureProfilesConfig, 
 // SetAzureSubscription sets the default subscription in the azure config file
 func SetActiveSubscription(subscription Subscription) error {
 	// Execute az account set command
-	_, err := utils.ExecuteCommand("az", "account", "set", "--subscription", subscription.ID)
+	err := utils.ExecuteCommand(AzureCLI_Command, "account", "set", "--subscription", subscription.ID)
 	if err != nil {
 		return err
 	}
@@ -120,21 +120,21 @@ func TryFindAzureSubscription(profilesConfig AzureProfilesConfig, subscriptionNa
 	switch len(results) {
 	case 0:
 		// No results found
-		return nil, fmt.Errorf("no azure subscription found for %s", subscriptionName)
+		return nil, fmt.Errorf("no azure subscription found for '%s'", subscriptionName)
 	case 1:
 		// One result found
 		s, ok := GetAzureSubscriptionByName(profilesConfig, results[0])
 		if !ok {
-			return nil, fmt.Errorf("no azure subscription found for %s", subscriptionName)
+			return nil, fmt.Errorf("no azure subscription found for '%s'", subscriptionName)
 		}
 		return []Subscription{s}, nil
 	default:
 		// Multiple results found
-		subscriptions := make([]Subscription, len(results))
-		for i, result := range results {
+		subscriptions := make([]Subscription, 0)
+		for _, result := range results {
 			s, ok := GetAzureSubscriptionByName(profilesConfig, result)
 			if ok {
-				subscriptions[i] = s
+				subscriptions = append(subscriptions, s)
 			}
 		}
 
