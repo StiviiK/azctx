@@ -22,29 +22,26 @@ func BuildPrompt(subscriptions []Subscription) promptui.Select {
 	maxContextLength := utils.GetLongestStringLength(subscriptionNames)
 
 	return promptui.Select{
-		Label:        fmt.Sprint("  Name" + strings.Repeat(" ", maxContextLength-4) + " | " + "Id" + strings.Repeat(" ", 36-2) + " | " + "TenantId" + strings.Repeat(" ", 36-8) + " "),
-		Items:        subscriptions,
-		Templates:    buildTemplate(maxContextLength),
+		Label: fmt.Sprint("Name" + strings.Repeat(" ", maxContextLength-4) + " | " + "SubscriptionId" + strings.Repeat(" ", 36-14) + " | " + "TenantId" + strings.Repeat(" ", 36-8)),
+		Items: subscriptions,
+		Templates: &promptui.SelectTemplates{
+			Label:    "{{ \" \" | repeat 4 }}{{ . }} |",
+			Inactive: builItemTemplate(maxContextLength, ""),
+			Active:   "▸ " + builItemTemplate(maxContextLength, "bold")[2:],
+			FuncMap:  newTemplateFuncMap(),
+		},
 		HideSelected: true,
 		Searcher: func(input string, index int) bool {
 			return fuzzy.MatchNormalized(strings.ToLower(input), strings.ToLower(subscriptionNames[index]))
 		},
-		Size: int(utils.Min(len(subscriptions), 10)),
-	}
-}
-
-// buildTemplate builds the template for the prompt
-func buildTemplate(maxContextLength int) *promptui.SelectTemplates {
-	return &promptui.SelectTemplates{
-		Inactive: builItemTemplate(maxContextLength, ""),
-		Active:   "▸ " + builItemTemplate(maxContextLength, "bold")[2:],
-		FuncMap:  newTemplateFuncMap(),
+		Size:   int(utils.Min(len(subscriptions), 10)),
+		Stdout: utils.NoBellStdout,
 	}
 }
 
 // buildItemTemplate builds the item template
 func builItemTemplate(maxContextLength int, additionalStyle string) string {
-	return fmt.Sprintf(`  {{ repeat %[1]d " " | print .Name | trunc %[1]d | green | %[2]s }} | {{ repeat 36 " " | print .ID | trunc 36 | cyan | %[2]s }} | {{ repeat 36 " " | print .Tenant | trunc 36 | faint | %[2]s }} |`, maxContextLength, additionalStyle)
+	return fmt.Sprintf("  {{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[2]s }} | {{ repeat 36 \" \" | print .ID | trunc 36 | cyan | %[2]s }} | {{ repeat 36 \" \" | print .Tenant | trunc 36 | faint | %[2]s }} |", maxContextLength, additionalStyle)
 }
 
 func newTemplateFuncMap() template.FuncMap {
