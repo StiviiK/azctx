@@ -116,7 +116,8 @@ func GetAzureSubscriptionByName(profilesConfig AzureProfilesConfig, subscription
 // TryFindAzureSubscription fuzzy searches for the azure subscription in the given AzureProfilesConfig
 func TryFindAzureSubscription(profilesConfig AzureProfilesConfig, subscriptionName string) ([]Subscription, error) {
 	// Fuzzy search for the subscription name
-	results := fuzzy.FindNormalized(strings.ToLower(subscriptionName), utils.LowercaseStrings(GetAzureSubscriptionNames(profilesConfig.Subscriptions)))
+	var subscriptionNames utils.StringSlice = GetAzureSubscriptionNames(profilesConfig.Subscriptions)
+	results := fuzzy.FindNormalized(strings.ToLower(subscriptionName), subscriptionNames.ToLower())
 	switch len(results) {
 	case 0:
 		// No results found

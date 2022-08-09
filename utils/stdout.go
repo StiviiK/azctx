@@ -1,18 +1,22 @@
 package utils
 
-import "github.com/chzyer/readline"
+import "os"
 
+// charBell is the ASCII code for the bell character (\a)
+const charBell = 7
+
+// noBellStdout is a wrapper around os.Stdout that suppresses the bell character (\a)
 type noBellStdout struct{}
 
 func (n *noBellStdout) Write(p []byte) (int, error) {
-	if len(p) == 1 && p[0] == readline.CharBell {
+	if len(p) == 1 && p[0] == charBell {
 		return 0, nil
 	}
-	return readline.Stdout.Write(p)
+	return os.Stdout.Write(p)
 }
 
 func (n *noBellStdout) Close() error {
-	return readline.Stdout.Close()
+	return os.Stdout.Close()
 }
 
 // NoBellStdout returns a stdout wrapper that doesn't ring the terminal bell

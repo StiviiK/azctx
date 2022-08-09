@@ -18,8 +18,8 @@ func BuildPrompt(subscriptions []Subscription) promptui.Select {
 	sort.Sort(subscriptionSorter(subscriptions))
 
 	// Build the prompt
-	subscriptionNames := GetAzureSubscriptionNames(subscriptions)
-	maxContextLength := utils.GetLongestStringLength(subscriptionNames)
+	var subscriptionNames utils.StringSlice = GetAzureSubscriptionNames(subscriptions)
+	maxContextLength := subscriptionNames.LongestStringLength()
 
 	return promptui.Select{
 		Label: fmt.Sprint("Name" + strings.Repeat(" ", maxContextLength-4) + " | " + "SubscriptionId" + strings.Repeat(" ", 36-14) + " | " + "TenantId" + strings.Repeat(" ", 36-8)),
