@@ -23,3 +23,5 @@ go.work
 # Binaries
 bin
 dist/
+
+azctx

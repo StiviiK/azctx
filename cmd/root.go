@@ -9,6 +9,15 @@ import (
 	"github.com/StiviiK/azctx/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
+	"go.szostok.io/version/extension"
+)
+
+const (
+	// Respository Owner
+	owner = "stiviik"
+
+	// Repository Name
+	repo = "azctx"
 )
 
 var rootCmd = &cobra.Command{
@@ -21,6 +30,14 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 	Run:          utils.WrapCobraCommandHandler(cobraRunE),
 	ValidArgs:    []string{"-", "NAME"},
+}
+
+func init() {
+	rootCmd.AddCommand(
+		extension.NewVersionCobraCmd(
+			extension.WithUpgradeNotice(owner, repo),
+		),
+	)
 }
 
 func Execute() {
@@ -68,10 +85,19 @@ func cobraRunE(cmd *cobra.Command, args []string) error {
 		if args[0] == "-" {
 			return errors.New("not implemented")
 		}
-		return selectSubscriptionByName(config, args[0], fetchTenantNames)
+
+		err = selectSubscriptionByName(config, args[0], fetchTenantNames)
+		if err != nil {
+			return err
+		}
 	default:
-		return interactivelySelectSubscription(config, fetchTenantNames)
+		err = interactivelySelectSubscription(config, fetchTenantNames)
+		if err != nil {
+			return err
+		}
 	}
+
+	return pkg.CheckForUpdates(owner, repo)
 }
 
 func interactivelySelectSubscription(profilesConfig pkg.AzureProfilesConfig, fetchTenantNames bool) error {
@@ -108,7 +134,8 @@ func selectSubscriptionByName(profilesConfig pkg.AzureProfilesConfig, name strin
 
 	// Check if we found more than one subscription
 	var subscription pkg.Subscription
-	if len(subscriptions) > 1 {
+	switch length := len(subscriptions); {
+	case length > 1:
 		// Check if we should fetch the tenant names
 		if fetchTenantNames {
 			subscriptions = pkg.FetchTenantNames(subscriptions)
@@ -121,10 +148,10 @@ func selectSubscriptionByName(profilesConfig pkg.AzureProfilesConfig, name strin
 		}
 
 		subscription = subscriptions[idx]
-	} else if len(subscriptions) == 1 {
+	case length == 1:
 		subscription = subscriptions[0]
-	} else {
-		return errors.New("no subscriptions found")
+	default:
+		return errors.New("no subscription found")
 	}
 
 	// Set the selected subscription as the default
@@ -151,7 +178,7 @@ func getActiveSubscription(profilesConfig pkg.AzureProfilesConfig) error {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolP("current", "c", false, "Display the current active subscription")
-	rootCmd.PersistentFlags().BoolP("refresh", "r", false, "Re-Authenticate and refresh the subscriptions")
-	rootCmd.PersistentFlags().BoolP("fetch-tenant-names", "t", false, "Fetch the tenant names for the subscriptions")
+	rootCmd.Flags().BoolP("current", "c", false, "Display the current active subscription")
+	rootCmd.Flags().BoolP("refresh", "r", false, "Re-Authenticate and refresh the subscriptions")
+	rootCmd.Flags().BoolP("fetch-tenant-names", "t", false, "Fetch the tenant names for the subscriptions")
 }
