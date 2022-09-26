@@ -51,6 +51,12 @@ func cobraRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// check if we should fetch the tenant names
+	fetchTenantNames, err := cmd.Flags().GetBool("fetch-tenant-names")
+	if err != nil {
+		return err
+	}
+
 	// check the flags
 	switch {
 	case cmd.Flags().Changed("current"):
@@ -62,15 +68,22 @@ func cobraRunE(cmd *cobra.Command, args []string) error {
 		if args[0] == "-" {
 			return errors.New("not implemented")
 		}
-		return selectSubscriptionByName(config, args[0])
+		return selectSubscriptionByName(config, args[0], fetchTenantNames)
 	default:
-		return interactivelySelectSubscription(config)
+		return interactivelySelectSubscription(config, fetchTenantNames)
 	}
 }
 
-func interactivelySelectSubscription(profilesConfig pkg.AzureProfilesConfig) error {
+func interactivelySelectSubscription(profilesConfig pkg.AzureProfilesConfig, fetchTenantNames bool) error {
 	// Ask the user to select a subscription
 	subscriptions := profilesConfig.Subscriptions
+
+	// Check if we should fetch the tenant names
+	if fetchTenantNames {
+		// Fetch the tenant names
+		subscriptions = pkg.FetchTenantNames(subscriptions)
+	}
+
 	prompt := pkg.BuildPrompt(subscriptions)
 	idx, _, err := prompt.Run()
 	if err != nil {
@@ -87,7 +100,7 @@ func interactivelySelectSubscription(profilesConfig pkg.AzureProfilesConfig) err
 	return nil
 }
 
-func selectSubscriptionByName(profilesConfig pkg.AzureProfilesConfig, name string) error {
+func selectSubscriptionByName(profilesConfig pkg.AzureProfilesConfig, name string, fetchTenantNames bool) error {
 	subscriptions, err := pkg.TryFindAzureSubscription(profilesConfig, name)
 	if err != nil {
 		return err
@@ -96,6 +109,11 @@ func selectSubscriptionByName(profilesConfig pkg.AzureProfilesConfig, name strin
 	// Check if we found more than one subscription
 	var subscription pkg.Subscription
 	if len(subscriptions) > 1 {
+		// Check if we should fetch the tenant names
+		if fetchTenantNames {
+			subscriptions = pkg.FetchTenantNames(subscriptions)
+		}
+
 		prompt := pkg.BuildPrompt(subscriptions)
 		idx, _, err := prompt.Run()
 		if err != nil {
@@ -135,4 +153,5 @@ func getActiveSubscription(profilesConfig pkg.AzureProfilesConfig) error {
 func init() {
 	rootCmd.PersistentFlags().BoolP("current", "c", false, "Display the current active subscription")
 	rootCmd.PersistentFlags().BoolP("refresh", "r", false, "Re-Authenticate and refresh the subscriptions")
+	rootCmd.PersistentFlags().BoolP("fetch-tenant-names", "t", false, "Fetch the tenant names for the subscriptions")
 }

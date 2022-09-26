@@ -19,15 +19,17 @@ func BuildPrompt(subscriptions []Subscription) promptui.Select {
 
 	// Build the prompt
 	var subscriptionNames utils.StringSlice = GetAzureSubscriptionNames(subscriptions)
-	maxContextLength := subscriptionNames.LongestStringLength()
+	var tenantNames utils.StringSlice = GetAzureTenantNames(subscriptions)
+	maxSubscriptionsLength := subscriptionNames.LongestStringLength()
+	maxTenantsLength := tenantNames.LongestStringLength()
 
 	return promptui.Select{
-		Label: fmt.Sprint("Name" + strings.Repeat(" ", maxContextLength-4) + " | " + "SubscriptionId" + strings.Repeat(" ", 36-14) + " | " + "TenantId" + strings.Repeat(" ", 36-8)),
+		Label: fmt.Sprint("Name" + strings.Repeat(" ", maxSubscriptionsLength-4) + " | " + "SubscriptionId" + strings.Repeat(" ", 36-14) + " | " + "Tenant" + strings.Repeat(" ", maxTenantsLength-6)),
 		Items: subscriptions,
 		Templates: &promptui.SelectTemplates{
 			Label:    "{{ \" \" | repeat 4 }}{{ . }} |",
-			Inactive: builItemTemplate(maxContextLength, ""),
-			Active:   "▸ " + builItemTemplate(maxContextLength, "bold")[2:],
+			Inactive: builItemTemplate(maxSubscriptionsLength, maxTenantsLength, ""),
+			Active:   "▸ " + builItemTemplate(maxSubscriptionsLength, maxTenantsLength, "bold")[2:],
 			FuncMap:  newTemplateFuncMap(),
 		},
 		HideSelected: true,
@@ -40,8 +42,8 @@ func BuildPrompt(subscriptions []Subscription) promptui.Select {
 }
 
 // buildItemTemplate builds the item template
-func builItemTemplate(maxContextLength int, additionalStyle string) string {
-	return fmt.Sprintf("  {{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[2]s }} | {{ repeat 36 \" \" | print .ID | trunc 36 | cyan | %[2]s }} | {{ repeat 36 \" \" | print .Tenant | trunc 36 | faint | %[2]s }} |", maxContextLength, additionalStyle)
+func builItemTemplate(maxSubscriptionsLength, maxTenantsLength int, additionalStyle string) string {
+	return fmt.Sprintf("  {{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }} | {{ repeat 36 \" \" | print .ID | trunc 36 | cyan | %[3]s }} | {{ repeat %[2]d \" \" | print .Tenant | trunc %[2]d | faint | %[3]s }} |", maxSubscriptionsLength, maxTenantsLength, additionalStyle)
 }
 
 func newTemplateFuncMap() template.FuncMap {

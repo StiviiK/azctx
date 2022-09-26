@@ -81,7 +81,7 @@ func GetAzureProfileConfig(profilesConfigFile afero.File) (AzureProfilesConfig, 
 // SetAzureSubscription sets the default subscription in the azure config file
 func SetActiveSubscription(subscription Subscription) error {
 	// Execute az account set command
-	err := utils.ExecuteCommand(AzureCLI_Command, "account", "set", "--subscription", subscription.ID)
+	_, err := utils.ExecuteCommand(AzureCLI_Command, "account", "set", "--subscription", subscription.ID)
 	if err != nil {
 		return err
 	}
@@ -151,4 +151,54 @@ func GetAzureSubscriptionNames(subscriptions []Subscription) []string {
 	}
 
 	return subscriptionNames
+}
+
+// GetAzureTenantNames returns the names of the given tenants as a slice of strings
+func GetAzureTenantNames(subscriptions []Subscription) []string {
+	var tenantNames []string
+	for _, subscription := range subscriptions {
+		tenantNames = append(tenantNames, subscription.Tenant)
+	}
+
+	return tenantNames
+}
+
+type AzureManagmentTenantListResponse struct {
+	Id   string `json:"tenantId"`
+	Name string `json:"displayName"`
+}
+
+// FetchTenantNames rewrites the tenant ids to the tenant names
+func FetchTenantNames(subscriptions []Subscription) []Subscription {
+	// Fetch all available tenants from the azure management api using the azure cli
+	resp, err := utils.ExecuteCommand(AzureCLI_Command, "rest", "--method", "get", "--url", "/tenants?api-version=2020-01-01", "--output", "json")
+	if err != nil {
+		log.Warn("Failed to fetch tenants from azure management api: %s", err.Error())
+		return subscriptions
+	}
+
+	// Unmarshal the response
+	var result struct {
+		Tenants []AzureManagmentTenantListResponse `json:"value"`
+	}
+	err = json.Unmarshal([]byte(resp), &result)
+	if err != nil {
+		log.Warn("Failed to unmarshal tenants from azure management api: %s", err.Error())
+		return subscriptions
+	}
+
+	// Map the tenant ids to the tenant names
+	tenantMap := make(map[string]string)
+	for _, tenant := range result.Tenants {
+		tenantMap[tenant.Id] = tenant.Name
+	}
+
+	// Rewrite the tenant ids to the tenant names
+	for i, subscription := range subscriptions {
+		if tenantName, ok := tenantMap[subscription.Tenant]; ok {
+			subscriptions[i].Tenant = fmt.Sprintf("%s (%s)", tenantName, subscription.Tenant)
+		}
+	}
+
+	return subscriptions
 }

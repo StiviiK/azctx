@@ -13,27 +13,28 @@ func IsCommandInstalled(name string) bool {
 }
 
 // ExecuteCommand executes a command and returns the output
-func ExecuteCommand(name string, args ...string) error {
+func ExecuteCommand(name string, args ...string) (string, error) {
 	// lookup the path of the command
 	cmdPath, err := exec.LookPath(name)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// build the command
+	stdoutBuffer := &bytes.Buffer{}
 	errBuffer := &bytes.Buffer{}
 	cmd := exec.Cmd{
 		Path:   cmdPath,
 		Args:   append([]string{name}, args...),
-		Stdout: nil,
+		Stdout: stdoutBuffer,
 		Stderr: errBuffer,
 	}
 
 	// execute the command
 	err = cmd.Run()
 	if err != nil {
-		return errors.New("Error executing command: " + errBuffer.String())
+		return stdoutBuffer.String(), errors.New("Error executing command: " + errBuffer.String())
 	}
 
-	return nil
+	return stdoutBuffer.String(), nil
 }
