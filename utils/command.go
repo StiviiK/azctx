@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"errors"
+	"io"
 	"os/exec"
 )
 
@@ -12,28 +13,42 @@ func IsCommandInstalled(name string) bool {
 	return err == nil
 }
 
-// ExecuteCommand executes a command and returns the output
-func ExecuteCommand(name string, args ...string) (string, error) {
+// ExecuteCommandBare executes a command and writes the output to the given writers
+func ExecuteCommandBare(name string, stdOut, stdErr io.Writer, args ...string) error {
 	// lookup the path of the command
 	cmdPath, err := exec.LookPath(name)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// build the command
-	stdoutBuffer := &bytes.Buffer{}
-	errBuffer := &bytes.Buffer{}
 	cmd := exec.Cmd{
 		Path:   cmdPath,
 		Args:   append([]string{name}, args...),
-		Stdout: stdoutBuffer,
-		Stderr: errBuffer,
+		Stdout: stdOut,
+		Stderr: stdErr,
 	}
 
 	// execute the command
 	err = cmd.Run()
 	if err != nil {
-		return stdoutBuffer.String(), errors.New("Error executing command: " + errBuffer.String())
+		return err
+	}
+
+	return nil
+}
+
+// ExecuteCommand executes a command and returns the output
+func ExecuteCommand(name string, args ...string) (string, error) {
+	stdoutBuffer := &bytes.Buffer{}
+	errBuffer := &bytes.Buffer{}
+	err := ExecuteCommandBare(name, stdoutBuffer, errBuffer, args...)
+	if err != nil {
+		if errBuffer.Len() > 0 {
+			return "", errors.New("Error executing command: " + errBuffer.String())
+		} else {
+			return "", err
+		}
 	}
 
 	return stdoutBuffer.String(), nil

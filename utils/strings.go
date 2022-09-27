@@ -5,8 +5,8 @@ import "strings"
 // StringSlice is a slice of strings, helper type used for extension methods
 type StringSlice []string
 
-// LongestStringLength returns the length of the longest string in the given slice
-func (slice StringSlice) LongestStringLength() int {
+// LongestLength returns the length of the longest string in the given slice
+func (slice StringSlice) LongestLength() int {
 	longestLength := 0
 	for _, s := range slice {
 		if len(s) > longestLength {

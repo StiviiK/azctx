@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
+	"github.com/StiviiK/azctx/azurecli"
 	"github.com/StiviiK/azctx/log"
 	"github.com/StiviiK/azctx/utils"
 	"github.com/lithammer/fuzzysearch/fuzzy"
@@ -58,28 +59,40 @@ func ReadAzureProfilesConfigFile(fs afero.Fs) (afero.File, error) {
 }
 
 // GetAzureProfileConfig returns the AzureProfilesConfig from the given azure config file
-func GetAzureProfileConfig(profilesConfigFile afero.File) (AzureProfilesConfig, error) {
+func GetAzureProfileConfig(profilesConfigFile afero.File) (azurecli.Profile, error) {
 	// Read the azureProfile.json file
-	configBytes, err := ioutil.ReadAll(profilesConfigFile)
+	configBytes, err := io.ReadAll(profilesConfigFile)
 	if err != nil {
-		return AzureProfilesConfig{}, fmt.Errorf("failed to read %s: %s", profilesConfigFile.Name(), err.Error())
+		return azurecli.Profile{}, fmt.Errorf("failed to read %s: %s", profilesConfigFile.Name(), err.Error())
 	}
 
 	// Remove UTF-8 BOM if present
 	configBytes = utils.RemoveUTF8BOM(configBytes)
 
 	// Unmarshal the config file
-	var profilesConfigJSON AzureProfilesConfig
+	var profilesConfigJSON azurecli.Profile
 	err = json.Unmarshal(configBytes, &profilesConfigJSON)
 	if err != nil {
-		return AzureProfilesConfig{}, fmt.Errorf("failed to unmarshal %s: %s", profilesConfigFile.Name(), err.Error())
+		return azurecli.Profile{}, fmt.Errorf("failed to unmarshal %s: %s", profilesConfigFile.Name(), err.Error())
 	}
 
 	return profilesConfigJSON, nil
 }
 
+// ExecuteAzLogin executes the az login command
+func ExecuteAzLogin(extraArgs []string) error {
+	args := []string{"login", "--allow-no-subscriptions"}
+	args = append(args, extraArgs...)
+	err := utils.ExecuteCommandBare(AzureCLI_Command, os.Stdout, os.Stderr, args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // SetAzureSubscription sets the default subscription in the azure config file
-func SetActiveSubscription(subscription Subscription) error {
+func SetActiveSubscription(subscription azurecli.Subscription) error {
 	// Execute az account set command
 	_, err := utils.ExecuteCommand(AzureCLI_Command, "account", "set", "--subscription", subscription.ID)
 	if err != nil {
@@ -90,7 +103,7 @@ func SetActiveSubscription(subscription Subscription) error {
 }
 
 // GetActiveSubscription returns the active subscription
-func GetActiveSubscription(profilesConfig AzureProfilesConfig) (Subscription, error) {
+func GetActiveSubscription(profilesConfig azurecli.Profile) (azurecli.Subscription, error) {
 	// select the subscription with the is default flag set to true
 	for _, subscription := range profilesConfig.Subscriptions {
 		if subscription.IsDefault {
@@ -98,11 +111,11 @@ func GetActiveSubscription(profilesConfig AzureProfilesConfig) (Subscription, er
 		}
 	}
 
-	return Subscription{}, errors.New("no active subscription found")
+	return azurecli.Subscription{}, errors.New("no active subscription found")
 }
 
 // GetAzureSubscriptionByName returns the azure subscription with the given name
-func GetAzureSubscriptionByName(profilesConfig AzureProfilesConfig, subscriptionName string) (Subscription, bool) {
+func GetAzureSubscriptionByName(profilesConfig azurecli.Profile, subscriptionName string) (azurecli.Subscription, bool) {
 	// Find the subscription with the given name
 	for _, subscription := range profilesConfig.Subscriptions {
 		if strings.EqualFold(subscription.Name, subscriptionName) {
@@ -110,13 +123,13 @@ func GetAzureSubscriptionByName(profilesConfig AzureProfilesConfig, subscription
 		}
 	}
 
-	return Subscription{}, false
+	return azurecli.Subscription{}, false
 }
 
-// TryFindAzureSubscription fuzzy searches for the azure subscription in the given AzureProfilesConfig
-func TryFindAzureSubscription(profilesConfig AzureProfilesConfig, subscriptionName string) ([]Subscription, error) {
+// TryFindSubscription fuzzy searches for the azure subscription in the given AzureProfilesConfig
+func TryFindSubscription(profilesConfig azurecli.Profile, subscriptionName string) ([]azurecli.Subscription, error) {
 	// Fuzzy search for the subscription name
-	var subscriptionNames utils.StringSlice = GetAzureSubscriptionNames(profilesConfig.Subscriptions)
+	subscriptionNames := utils.StringSlice(azurecli.SubscriptionNames(profilesConfig.Subscriptions))
 	results := fuzzy.FindNormalized(strings.ToLower(subscriptionName), subscriptionNames.ToLower())
 	switch len(results) {
 	case 0:
@@ -128,10 +141,10 @@ func TryFindAzureSubscription(profilesConfig AzureProfilesConfig, subscriptionNa
 		if !ok {
 			return nil, fmt.Errorf("no azure subscription found for '%s'", subscriptionName)
 		}
-		return []Subscription{s}, nil
+		return []azurecli.Subscription{s}, nil
 	default:
 		// Multiple results found
-		subscriptions := make([]Subscription, 0)
+		subscriptions := make([]azurecli.Subscription, 0)
 		for _, result := range results {
 			s, ok := GetAzureSubscriptionByName(profilesConfig, result)
 			if ok {
@@ -141,64 +154,4 @@ func TryFindAzureSubscription(profilesConfig AzureProfilesConfig, subscriptionNa
 
 		return subscriptions, nil
 	}
-}
-
-// GetAzureSubscriptionNames returns the names of the given subscriptions as a slice of strings
-func GetAzureSubscriptionNames(subscriptions []Subscription) []string {
-	var subscriptionNames []string
-	for _, subscription := range subscriptions {
-		subscriptionNames = append(subscriptionNames, subscription.Name)
-	}
-
-	return subscriptionNames
-}
-
-// GetAzureTenantNames returns the names of the given tenants as a slice of strings
-func GetAzureTenantNames(subscriptions []Subscription) []string {
-	var tenantNames []string
-	for _, subscription := range subscriptions {
-		tenantNames = append(tenantNames, subscription.Tenant)
-	}
-
-	return tenantNames
-}
-
-type AzureManagmentTenantListResponse struct {
-	Id   string `json:"tenantId"`
-	Name string `json:"displayName"`
-}
-
-// FetchTenantNames rewrites the tenant ids to the tenant names
-func FetchTenantNames(subscriptions []Subscription) []Subscription {
-	// Fetch all available tenants from the azure management api using the azure cli
-	resp, err := utils.ExecuteCommand(AzureCLI_Command, "rest", "--method", "get", "--url", "/tenants?api-version=2020-01-01", "--output", "json")
-	if err != nil {
-		log.Warn("Failed to fetch tenants from azure management api: %s", err.Error())
-		return subscriptions
-	}
-
-	// Unmarshal the response
-	var result struct {
-		Tenants []AzureManagmentTenantListResponse `json:"value"`
-	}
-	err = json.Unmarshal([]byte(resp), &result)
-	if err != nil {
-		log.Warn("Failed to unmarshal tenants from azure management api: %s", err.Error())
-		return subscriptions
-	}
-
-	// Map the tenant ids to the tenant names
-	tenantMap := make(map[string]string)
-	for _, tenant := range result.Tenants {
-		tenantMap[tenant.Id] = tenant.Name
-	}
-
-	// Rewrite the tenant ids to the tenant names
-	for i, subscription := range subscriptions {
-		if tenantName, ok := tenantMap[subscription.Tenant]; ok {
-			subscriptions[i].Tenant = fmt.Sprintf("%s (%s)", tenantName, subscription.Tenant)
-		}
-	}
-
-	return subscriptions
 }

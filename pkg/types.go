@@ -14,11 +14,11 @@ type Subscription struct {
 }
 
 // subscriptionSorter is a custom sorter for subscriptions
-type subscriptionSorter []Subscription
+type SubscriptionSorter []Subscription
 
-func (a subscriptionSorter) Len() int      { return len(a) }
-func (a subscriptionSorter) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a subscriptionSorter) Less(i, j int) bool {
+func (a SubscriptionSorter) Len() int      { return len(a) }
+func (a SubscriptionSorter) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a SubscriptionSorter) Less(i, j int) bool {
 	subA, subB := a[i], a[j]
 
 	if subA.Tenant == subB.Tenant {
