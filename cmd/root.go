@@ -42,7 +42,8 @@ func init() {
 	)
 
 	rootCmd.Flags().BoolP("current", "c", false, "Display the current active subscription")
-	rootCmd.Flags().BoolP("refresh", "r", false, "Re-Authenticate and refresh the subscriptions")
+	rootCmd.Flags().BoolP("refresh", "r", false, `Re-Authenticate and refresh the subscriptions. 
+	Deprecated. Please use azctx login instead.`)
 }
 
 func Execute() {
@@ -66,6 +67,7 @@ func rootRunE(cmd *cobra.Command, args []string) error {
 	case cmd.Flags().Changed("current"):
 		return getActiveSubscription(cli)
 	case cmd.Flags().Changed("refresh"):
+		log.Warn("Deprecated flag --refresh/-r used. Please use `azctx login` instead.")
 		return refreshSubscriptions(cli, args)
 	case len(args) == 1:
 		// check if the user passed -

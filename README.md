@@ -30,7 +30,8 @@ Available Commands:
 Flags:
   -c, --current   Display the current active subscription
   -h, --help      help for azctx
-  -r, --refresh   Re-Authenticate and refresh the subscriptions
+  -r, --refresh   Re-Authenticate and refresh the subscriptions. 
+                        Deprecated. Please use azctx login instead.
 
 Use "azctx [command] --help" for more information about a command.
 ```
