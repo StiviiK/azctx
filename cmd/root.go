@@ -43,7 +43,6 @@ func init() {
 
 	rootCmd.Flags().BoolP("current", "c", false, "Display the current active subscription")
 	rootCmd.Flags().BoolP("refresh", "r", false, "Re-Authenticate and refresh the subscriptions")
-	rootCmd.Flags().BoolP("fetch-tenant-names", "t", false, "Fetch the tenant names for the subscriptions")
 }
 
 func Execute() {

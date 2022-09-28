@@ -28,10 +28,9 @@ Available Commands:
   version     Print the CLI version
 
 Flags:
-  -c, --current              Display the current active subscription
-  -t, --fetch-tenant-names   Fetch the tenant names for the subscriptions
-  -h, --help                 help for azctx
-  -r, --refresh              Re-Authenticate and refresh the subscriptions
+  -c, --current   Display the current active subscription
+  -h, --help      help for azctx
+  -r, --refresh   Re-Authenticate and refresh the subscriptions
 
 Use "azctx [command] --help" for more information about a command.
 ```
