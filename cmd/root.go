@@ -4,8 +4,10 @@ import (
 	"errors"
 	"os"
 
+	"github.com/StiviiK/azctx/azurecli"
 	"github.com/StiviiK/azctx/log"
-	"github.com/StiviiK/azctx/pkg"
+	"github.com/StiviiK/azctx/prompt"
+	"github.com/StiviiK/azctx/updates"
 	"github.com/StiviiK/azctx/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -28,7 +30,7 @@ var rootCmd = &cobra.Command{
 	Pass a subscription name to select a specific subscription.
 	Pass - to switch to the previous subscription.`,
 	SilenceUsage: true,
-	Run:          utils.WrapCobraCommandHandler(cobraRunE),
+	Run:          utils.WrapCobraCommandHandler(rootRunE),
 	ValidArgs:    []string{"-", "NAME"},
 }
 
@@ -38,6 +40,10 @@ func init() {
 			extension.WithUpgradeNotice(owner, repo),
 		),
 	)
+
+	rootCmd.Flags().BoolP("current", "c", false, "Display the current active subscription")
+	rootCmd.Flags().BoolP("refresh", "r", false, `Re-Authenticate and refresh the subscriptions. 
+	Deprecated. Please use azctx login instead.`)
 }
 
 func Execute() {
@@ -46,79 +52,55 @@ func Execute() {
 	}
 }
 
-func cobraRunE(cmd *cobra.Command, args []string) error {
-	// Initialize the file system abstraction
-	fs := afero.NewOsFs()
-
-	// Ensure that the azure cli is installed
-	err := pkg.EnsureAzureCLI()
+func rootRunE(cmd *cobra.Command, args []string) error {
+	// Initialize the CLI
+	cli, err := azurecli.New(afero.NewOsFs())
 	if err != nil {
 		return err
 	}
 
-	// Read the azure profiles config file
-	profilesConfig, err := pkg.ReadAzureProfilesConfigFile(fs)
-	if err != nil {
-		return err
-	}
-
-	// Paarse the azure profile config
-	config, err := pkg.GetAzureProfileConfig(profilesConfig)
-	if err != nil {
-		return err
-	}
-
-	// check if we should fetch the tenant names
-	fetchTenantNames, err := cmd.Flags().GetBool("fetch-tenant-names")
-	if err != nil {
-		return err
-	}
+	// Try to map the tenant ids to names
+	cli.MapTenantIdsToNames()
 
 	// check the flags
 	switch {
 	case cmd.Flags().Changed("current"):
-		return getActiveSubscription(config)
+		return getActiveSubscription(cli)
 	case cmd.Flags().Changed("refresh"):
-		return errors.New("not implemented")
+		log.Warn("Deprecated flag --refresh/-r used. Please use `azctx login` instead.")
+		return refreshSubscriptions(cli, args)
 	case len(args) == 1:
 		// check if the user passed -
 		if args[0] == "-" {
 			return errors.New("not implemented")
 		}
 
-		err = selectSubscriptionByName(config, args[0], fetchTenantNames)
+		err = selectSubscriptionByName(cli, args[0])
 		if err != nil {
 			return err
 		}
 	default:
-		err = interactivelySelectSubscription(config, fetchTenantNames)
+		err = interactivelySelectSubscription(cli)
 		if err != nil {
 			return err
 		}
 	}
 
-	return pkg.CheckForUpdates(owner, repo)
+	return updates.Check(owner, repo)
 }
 
-func interactivelySelectSubscription(profilesConfig pkg.AzureProfilesConfig, fetchTenantNames bool) error {
+func interactivelySelectSubscription(cli azurecli.CLI) error {
 	// Ask the user to select a subscription
-	subscriptions := profilesConfig.Subscriptions
-
-	// Check if we should fetch the tenant names
-	if fetchTenantNames {
-		// Fetch the tenant names
-		subscriptions = pkg.FetchTenantNames(subscriptions)
-	}
-
-	prompt := pkg.BuildPrompt(subscriptions)
+	prompt := prompt.BuildPrompt(cli.Subscriptions())
 	idx, _, err := prompt.Run()
 	if err != nil {
 		return nil
 	}
 
 	// Set the selected subscription as the default
+	subscriptions := cli.Subscriptions()
 	log.Info("Setting active subscription to %s (%s)", subscriptions[idx].Name, subscriptions[idx].ID)
-	err = pkg.SetActiveSubscription(subscriptions[idx])
+	err = cli.SetSubscription(subscriptions[idx])
 	if err != nil {
 		return err
 	}
@@ -126,22 +108,18 @@ func interactivelySelectSubscription(profilesConfig pkg.AzureProfilesConfig, fet
 	return nil
 }
 
-func selectSubscriptionByName(profilesConfig pkg.AzureProfilesConfig, name string, fetchTenantNames bool) error {
-	subscriptions, err := pkg.TryFindAzureSubscription(profilesConfig, name)
+func selectSubscriptionByName(cli azurecli.CLI, name string) error {
+	log.Info(name)
+	subscriptions, err := cli.TryFindSubscription(name)
 	if err != nil {
 		return err
 	}
 
 	// Check if we found more than one subscription
-	var subscription pkg.Subscription
+	var subscription azurecli.Subscription
 	switch length := len(subscriptions); {
 	case length > 1:
-		// Check if we should fetch the tenant names
-		if fetchTenantNames {
-			subscriptions = pkg.FetchTenantNames(subscriptions)
-		}
-
-		prompt := pkg.BuildPrompt(subscriptions)
+		prompt := prompt.BuildPrompt(subscriptions)
 		idx, _, err := prompt.Run()
 		if err != nil {
 			return nil
@@ -156,7 +134,7 @@ func selectSubscriptionByName(profilesConfig pkg.AzureProfilesConfig, name strin
 
 	// Set the selected subscription as the default
 	log.Info("Setting active subscription to %s (%s)", subscription.Name, subscription.ID)
-	err = pkg.SetActiveSubscription(subscription)
+	err = cli.SetSubscription(subscription)
 	if err != nil {
 		return err
 	}
@@ -164,9 +142,9 @@ func selectSubscriptionByName(profilesConfig pkg.AzureProfilesConfig, name strin
 	return nil
 }
 
-func getActiveSubscription(profilesConfig pkg.AzureProfilesConfig) error {
+func getActiveSubscription(cli azurecli.CLI) error {
 	// Try to get the active subscription
-	subscription, err := pkg.GetActiveSubscription(profilesConfig)
+	subscription, err := cli.ActiveSubscription()
 	if err != nil {
 		return err
 	}
@@ -175,10 +153,4 @@ func getActiveSubscription(profilesConfig pkg.AzureProfilesConfig) error {
 	log.Info("Active subscription: %s (%s)", subscription.Name, subscription.ID)
 
 	return nil
-}
-
-func init() {
-	rootCmd.Flags().BoolP("current", "c", false, "Display the current active subscription")
-	rootCmd.Flags().BoolP("refresh", "r", false, "Re-Authenticate and refresh the subscriptions")
-	rootCmd.Flags().BoolP("fetch-tenant-names", "t", false, "Fetch the tenant names for the subscriptions")
 }

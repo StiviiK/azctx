@@ -1,4 +1,4 @@
-package pkg
+package updates
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"go.szostok.io/version/upgrade"
 )
 
-func CheckForUpdates(owner, repo string) error {
+func Check(owner, repo string) error {
 	// Check the current version and print a ghDetector if a new version is available
 	ghDetector, currentVersion := upgrade.NewGitHubDetector(owner, repo), version.Get().Version
 	updateCheckInfo, err := ghDetector.LookForLatestRelease(upgrade.LookForLatestReleaseInput{CurrentVersion: currentVersion})

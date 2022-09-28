@@ -1,4 +1,4 @@
-package pkg
+package prompt
 
 import (
 	"fmt"
@@ -7,21 +7,21 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
+	"github.com/StiviiK/azctx/azurecli"
 	"github.com/StiviiK/azctx/utils"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
 )
 
 // BuildPrompt builds a prompt for the user to select a subscription
-func BuildPrompt(subscriptions []Subscription) promptui.Select {
+func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
 	// Sort the subscriptions by name
-	sort.Sort(subscriptionSorter(subscriptions))
+	sort.Sort(subscriptions)
 
 	// Build the prompt
-	var subscriptionNames utils.StringSlice = GetAzureSubscriptionNames(subscriptions)
-	var tenantNames utils.StringSlice = GetAzureTenantNames(subscriptions)
-	maxSubscriptionsLength := subscriptionNames.LongestStringLength()
-	maxTenantsLength := tenantNames.LongestStringLength()
+	subscriptionNames := utils.StringSlice(subscriptions.SubscriptionNames())
+	maxSubscriptionsLength := subscriptionNames.LongestLength()
+	maxTenantsLength := tenantNames(subscriptions).LongestLength()
 
 	return promptui.Select{
 		Label: fmt.Sprint("Name" + strings.Repeat(" ", maxSubscriptionsLength-4) + " | " + "SubscriptionId" + strings.Repeat(" ", 36-14) + " | " + "Tenant" + strings.Repeat(" ", maxTenantsLength-6)),
@@ -53,4 +53,13 @@ func newTemplateFuncMap() template.FuncMap {
 	ret["bold"] = promptui.Styler(promptui.FGBold)
 	ret["faint"] = promptui.Styler(promptui.FGFaint)
 	return ret
+}
+
+func tenantNames(subscriptions []azurecli.Subscription) utils.StringSlice {
+	var tenantNames []string
+	for _, subscription := range subscriptions {
+		tenantNames = append(tenantNames, subscription.Tenant)
+	}
+
+	return tenantNames
 }
