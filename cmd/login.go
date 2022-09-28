@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/StiviiK/azctx/azurecli"
+	"github.com/StiviiK/azctx/log"
 	"github.com/StiviiK/azctx/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -27,12 +28,19 @@ func loginRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Refresh the subscriptions
+	// Refresh the subscriptions and tenants
 	err = refreshSubscriptions(cli, args)
 	if err != nil {
 		return err
 	}
 
+	// Refresh the cli instance
+	err = cli.Refresh()
+	if err != nil {
+		return err
+	}
+
+	log.Info("Successfully fetched %d tenants and %d subscriptions.", len(cli.Tenants()), len(cli.Subscriptions()))
 	return nil
 }
 

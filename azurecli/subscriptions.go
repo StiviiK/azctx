@@ -9,31 +9,14 @@ import (
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
-func (a SubscriptionSlice) Len() int      { return len(a) }
-func (a SubscriptionSlice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a SubscriptionSlice) Less(i, j int) bool {
-	subA, subB := a[i], a[j]
-
-	if subA.Tenant == subB.Tenant {
-		return subA.Name < subB.Name
-	}
-
-	return subA.Tenant > subB.Tenant
-}
-
-// SubscriptionNames returns the names of the given subscriptions
-func (subscriptionSlice SubscriptionSlice) SubscriptionNames() []string {
-	var subscriptionNames []string
-	for _, subscription := range subscriptionSlice {
-		subscriptionNames = append(subscriptionNames, subscription.Name)
-	}
-
-	return subscriptionNames
-}
-
 // Subscriptions returns all subscriptions
 func (cli CLI) Subscriptions() []Subscription {
 	return cli.profile.Subscriptions
+}
+
+// SubscriptionNames returns the names of the given subscriptions
+func (cli CLI) SubscriptionNames() []string {
+	return SubscriptionSlice(cli.profile.Subscriptions).SubscriptionNames()
 }
 
 // SetSubscription sets the default subscription in the azure config file
@@ -57,11 +40,6 @@ func (cli CLI) ActiveSubscription() (Subscription, error) {
 	}
 
 	return Subscription{}, errors.New("no active subscription found")
-}
-
-// SubscriptionNames returns the names of the given subscriptions
-func (cli CLI) SubscriptionNames() []string {
-	return SubscriptionSlice(cli.Subscriptions()).SubscriptionNames()
 }
 
 // GetSubscriptionByName returns the azure subscription with the given name
@@ -105,4 +83,26 @@ func (cli CLI) TryFindSubscription(subscriptionName string) ([]Subscription, err
 
 		return subscriptions, nil
 	}
+}
+
+func (a SubscriptionSlice) Len() int      { return len(a) }
+func (a SubscriptionSlice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a SubscriptionSlice) Less(i, j int) bool {
+	subA, subB := a[i], a[j]
+
+	if subA.Tenant == subB.Tenant {
+		return subA.Name < subB.Name
+	}
+
+	return subA.Tenant > subB.Tenant
+}
+
+// SubscriptionNames returns the names of the given subscriptions
+func (subscriptionSlice SubscriptionSlice) SubscriptionNames() []string {
+	var subscriptionNames []string
+	for _, subscription := range subscriptionSlice {
+		subscriptionNames = append(subscriptionNames, subscription.Name)
+	}
+
+	return subscriptionNames
 }

@@ -4,12 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/StiviiK/azctx/log"
 	"github.com/StiviiK/azctx/utils"
 )
 
+// Tenants returns all tenants
+func (cli CLI) Tenants() []Tenant {
+	return cli.tenants
+}
+
 // UpdateTenants fetches all available tenants from the azure management api and persists them to the azctxTenants.json file
 func (cli *CLI) UpdateTenants() error {
-	// Fetch all available tenants from the azure management api using the azure cli
+	// Fetch all available tenants from the azure management api (https://management.azure.com/tenants?api-version=2020-01-01) using the azure cli
 	args := []string{
 		"rest",
 		"--method", "get",
@@ -42,4 +48,24 @@ func (cli *CLI) UpdateTenants() error {
 	}
 
 	return nil
+}
+
+// MapTenanIdsToNames maps the tenant ids to the tenant names
+func (cli *CLI) MapTenantIdsToNames() {
+	if len(cli.tenants) > 0 {
+		// Map the tenant ids to the tenant names
+		tenantMap := make(map[string]string)
+		for _, tenant := range cli.tenants {
+			tenantMap[tenant.Id] = tenant.Name
+		}
+
+		// Rewrite the tenant ids to the tenant names
+		for i, subscription := range cli.profile.Subscriptions {
+			if tenantName, ok := tenantMap[subscription.Tenant]; ok {
+				cli.profile.Subscriptions[i].Tenant = fmt.Sprintf("%s (%s)", tenantName, subscription.Tenant)
+			}
+		}
+	} else {
+		log.Info("If you want to fetch the tenant names, please authenticate the azure cli again using the wraper command: `azctx login`.")
+	}
 }

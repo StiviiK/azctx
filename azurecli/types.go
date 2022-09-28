@@ -21,16 +21,6 @@ type Tenant struct {
 	Name string `json:"displayName"`
 }
 
-// Subscriptions
-type subscriptionUser struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-}
-
-type managingTenant struct {
-	ID string `json:"tenantId"`
-}
-
 // Subscription represents a subscription in the AzureProfiles.json file
 type Subscription struct {
 	ID           string           `json:"id"`
@@ -42,6 +32,15 @@ type Subscription struct {
 	Environment  string           `json:"environmentName"`
 	HomeTenantId string           `json:"homeTenantId"`
 	ManagedBy    []managingTenant `json:"managedByTenants"`
+}
+
+type subscriptionUser struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+type managingTenant struct {
+	ID string `json:"tenantId"`
 }
 
 // SubscriptionSlice is a custom sorter for subscriptions

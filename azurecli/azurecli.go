@@ -2,10 +2,8 @@ package azurecli
 
 import (
 	"errors"
-	"fmt"
 	"os"
 
-	"github.com/StiviiK/azctx/log"
 	"github.com/StiviiK/azctx/utils"
 	"github.com/spf13/afero"
 )
@@ -20,24 +18,34 @@ func New(fs afero.Fs) (CLI, error) {
 	// Create a new CLI instance
 	cli := CLI{
 		fs:      fs,
-		tenants: make([]Tenant, 0),
-
 		profile: nil,
+		tenants: make([]Tenant, 0),
 	}
 
-	// Read the azureProfile.json file
-	err := cli.readProfile()
-	if err != nil {
-		return CLI{}, err
-	}
-
-	// Read the azctxTenants.json file
-	err = cli.readTenants()
+	// Refresh the CLI instance
+	err := cli.Refresh()
 	if err != nil {
 		return CLI{}, err
 	}
 
 	return cli, nil
+}
+
+// Refresh refreshes the CLI instance by fetching the latest data from the azure cli
+func (cli *CLI) Refresh() error {
+	// Read the azureProfile.json file
+	err := cli.readProfile()
+	if err != nil {
+		return err
+	}
+
+	// Read the azctxTenants.json file
+	err = cli.readTenants()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Login executes the az login command
@@ -50,24 +58,4 @@ func (cli CLI) Login(extraArgs []string) error {
 	}
 
 	return nil
-}
-
-// MapTenanIdsToNames maps the tenant ids to the tenant names
-func (cli *CLI) MapTenantIdsToNames() {
-	if len(cli.tenants) > 0 {
-		// Map the tenant ids to the tenant names
-		tenantMap := make(map[string]string)
-		for _, tenant := range cli.tenants {
-			tenantMap[tenant.Id] = tenant.Name
-		}
-
-		// Rewrite the tenant ids to the tenant names
-		for i, subscription := range cli.profile.Subscriptions {
-			if tenantName, ok := tenantMap[subscription.Tenant]; ok {
-				cli.profile.Subscriptions[i].Tenant = fmt.Sprintf("%s (%s)", tenantName, subscription.Tenant)
-			}
-		}
-	} else {
-		log.Info("If you want to fetch the tenant names, please authenticate the azure cli again using the wraper command: `azctx login`.")
-	}
 }
