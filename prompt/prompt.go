@@ -14,15 +14,14 @@ import (
 )
 
 // BuildPrompt builds a prompt for the user to select a subscription
-func BuildPrompt(subscriptions []azurecli.Subscription) promptui.Select {
+func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
 	// Sort the subscriptions by name
-	sort.Sort(azurecli.SubscriptionSorter(subscriptions))
+	sort.Sort(subscriptions)
 
 	// Build the prompt
-	subscriptionNames := utils.StringSlice(azurecli.SubscriptionNames(subscriptions))
-	tenantNames := tenantNames(subscriptions)
+	subscriptionNames := utils.StringSlice(subscriptions.SubscriptionNames())
 	maxSubscriptionsLength := subscriptionNames.LongestLength()
-	maxTenantsLength := tenantNames.LongestLength()
+	maxTenantsLength := tenantNames(subscriptions).LongestLength()
 
 	return promptui.Select{
 		Label: fmt.Sprint("Name" + strings.Repeat(" ", maxSubscriptionsLength-4) + " | " + "SubscriptionId" + strings.Repeat(" ", 36-14) + " | " + "Tenant" + strings.Repeat(" ", maxTenantsLength-6)),

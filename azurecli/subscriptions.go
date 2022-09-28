@@ -2,24 +2,16 @@ package azurecli
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/StiviiK/azctx/utils"
+	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
-// Subscription represents a subscription in the AzureProfiles.json file
-type Subscription struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Tenant    string `json:"tenantId"`
-	IsDefault bool   `json:"isDefault"`
-}
-
-// subscriptionSorter is a custom sorter for subscriptions
-type SubscriptionSorter []Subscription
-
-func (a SubscriptionSorter) Len() int      { return len(a) }
-func (a SubscriptionSorter) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a SubscriptionSorter) Less(i, j int) bool {
+func (a SubscriptionSlice) Len() int      { return len(a) }
+func (a SubscriptionSlice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a SubscriptionSlice) Less(i, j int) bool {
 	subA, subB := a[i], a[j]
 
 	if subA.Tenant == subB.Tenant {
@@ -29,10 +21,25 @@ func (a SubscriptionSorter) Less(i, j int) bool {
 	return subA.Tenant > subB.Tenant
 }
 
+// SubscriptionNames returns the names of the given subscriptions
+func (subscriptionSlice SubscriptionSlice) SubscriptionNames() []string {
+	var subscriptionNames []string
+	for _, subscription := range subscriptionSlice {
+		subscriptionNames = append(subscriptionNames, subscription.Name)
+	}
+
+	return subscriptionNames
+}
+
+// Subscriptions returns all subscriptions
+func (cli CLI) Subscriptions() []Subscription {
+	return cli.profile.Subscriptions
+}
+
 // SetSubscription sets the default subscription in the azure config file
-func SetSubscription(subscription Subscription) error {
+func (cli *CLI) SetSubscription(subscription Subscription) error {
 	// Execute az account set command
-	_, err := utils.ExecuteCommand(Command, "account", "set", "--subscription", subscription.ID)
+	_, err := utils.ExecuteCommand(command, "account", "set", "--subscription", subscription.ID)
 	if err != nil {
 		return err
 	}
@@ -41,9 +48,9 @@ func SetSubscription(subscription Subscription) error {
 }
 
 // ActiveSubscription returns the active subscription
-func ActiveSubscription(profile Profile) (Subscription, error) {
+func (cli CLI) ActiveSubscription() (Subscription, error) {
 	// select the subscription with the is default flag set to true
-	for _, subscription := range profile.Subscriptions {
+	for _, subscription := range cli.profile.Subscriptions {
 		if subscription.IsDefault {
 			return subscription, nil
 		}
@@ -53,11 +60,49 @@ func ActiveSubscription(profile Profile) (Subscription, error) {
 }
 
 // SubscriptionNames returns the names of the given subscriptions
-func SubscriptionNames(subscriptions []Subscription) []string {
-	var subscriptionNames []string
-	for _, subscription := range subscriptions {
-		subscriptionNames = append(subscriptionNames, subscription.Name)
+func (cli CLI) SubscriptionNames() []string {
+	return SubscriptionSlice(cli.Subscriptions()).SubscriptionNames()
+}
+
+// GetSubscriptionByName returns the azure subscription with the given name
+func (cli CLI) GetSubscriptionByName(subscriptionName string) (Subscription, bool) {
+	// Find the subscription with the given name
+	for _, subscription := range cli.profile.Subscriptions {
+		if strings.EqualFold(subscription.Name, subscriptionName) {
+			return subscription, true
+		}
 	}
 
-	return subscriptionNames
+	return Subscription{}, false
+}
+
+// TryFindSubscription fuzzy searches for the azure subscription in the given AzureProfilesConfig
+func (cli CLI) TryFindSubscription(subscriptionName string) ([]Subscription, error) {
+	// Fuzzy search for the subscription name
+	subscriptionNames := utils.StringSlice(cli.SubscriptionNames())
+	results := fuzzy.FindNormalized(strings.ToLower(subscriptionName), subscriptionNames.ToLower())
+
+	switch len(results) {
+	case 0:
+		// No results found
+		return nil, fmt.Errorf("no azure subscription found for '%s'", subscriptionName)
+	case 1:
+		// One result found
+		s, ok := cli.GetSubscriptionByName(results[0])
+		if !ok {
+			return nil, fmt.Errorf("no azure subscription found for '%s'", subscriptionName)
+		}
+		return []Subscription{s}, nil
+	default:
+		// Multiple results found
+		subscriptions := make([]Subscription, 0)
+		for _, result := range results {
+			s, ok := cli.GetSubscriptionByName(result)
+			if ok {
+				subscriptions = append(subscriptions, s)
+			}
+		}
+
+		return subscriptions, nil
+	}
 }

@@ -7,14 +7,8 @@ import (
 	"github.com/StiviiK/azctx/utils"
 )
 
-// TenantListResponse represents the response of the azure management api
-type TenantListResponse struct {
-	Id   string `json:"tenantId"`
-	Name string `json:"displayName"`
-}
-
-// FetchTenants fetches all available tenants from the azure management api
-func FetchTenants() ([]TenantListResponse, error) {
+// UpdateTenants fetches all available tenants from the azure management api and persists them to the azctxTenants.json file
+func (cli *CLI) UpdateTenants() error {
 	// Fetch all available tenants from the azure management api using the azure cli
 	args := []string{
 		"rest",
@@ -23,43 +17,29 @@ func FetchTenants() ([]TenantListResponse, error) {
 		"--output", "json",
 	}
 
-	output, err := utils.ExecuteCommand(Command, args...)
+	output, err := utils.ExecuteCommand(command, args...)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Unmarshal the output
 	var apiResponse struct {
-		Tenants []TenantListResponse `json:"value"`
+		Tenants []Tenant `json:"value"`
 	}
 	err = json.Unmarshal([]byte(output), &apiResponse)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal az account list output: %s", err.Error())
+		return fmt.Errorf("failed to unmarshal az account list output: %s", err.Error())
 	}
 
-	return apiResponse.Tenants, nil
-}
+	// Copy the tenants to the CLI instance
+	cli.tenants = make([]Tenant, len(apiResponse.Tenants))
+	copy(cli.tenants, apiResponse.Tenants)
 
-// FetchTenantNames rewrites the tenant ids to the tenant names
-func FetchTenantNames(subscriptions []Subscription) []Subscription {
-	// Fetch all available tenants
-	tenants, err := FetchTenants()
+	// Persist the tenants to the json file
+	err = cli.writeTenants()
 	if err != nil {
-		return subscriptions
+		return fmt.Errorf("failed to write tenants to json file: %s", err.Error())
 	}
 
-	// Map the tenant ids to the tenant names
-	tenantMap := make(map[string]string)
-	for _, tenant := range tenants {
-		tenantMap[tenant.Id] = tenant.Name
-	}
-
-	// Rewrite the tenant ids to the tenant names
-	for i, subscription := range subscriptions {
-		if tenantName, ok := tenantMap[subscription.Tenant]; ok {
-			subscriptions[i].Tenant = fmt.Sprintf("%s (%s)", tenantName, subscription.Tenant)
-		}
-	}
-
-	return subscriptions
+	return nil
 }
