@@ -7,10 +7,11 @@
 
 **`azctx`** helps you switch between azure cli subscriptions back and forth:
 
-![azctx demo GIF](img/azctx-demo.png)
+![azctx demo GIF](assets/img/azctx-demo.png)
+
 
 # azctx(1)
-
+#
 ```bash
 azctx is a CLI tool for managing azure cli subscriptions.
         It is a helper for the azure cli and provides a simple interface for managing subscriptions.
