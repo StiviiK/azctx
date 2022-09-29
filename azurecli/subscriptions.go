@@ -22,7 +22,7 @@ func (cli CLI) SubscriptionNames() []string {
 // SetSubscription sets the default subscription in the azure config file
 func (cli *CLI) SetSubscription(subscription Subscription) error {
 	// Execute az account set command
-	_, err := utils.ExecuteCommand(command, "account", "set", "--subscription", subscription.ID)
+	_, err := utils.ExecuteCommand(AZ_COMMAND, "account", "set", "--subscription", subscription.Id)
 	if err != nil {
 		return err
 	}

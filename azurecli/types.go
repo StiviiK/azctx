@@ -5,7 +5,7 @@ import "github.com/spf13/afero"
 // CLI represents the azure cli
 type CLI struct {
 	fs      afero.Fs
-	profile *Profile
+	profile Profile
 	tenants []Tenant
 }
 
@@ -23,24 +23,20 @@ type Tenant struct {
 
 // Subscription represents a subscription in the AzureProfiles.json file
 type Subscription struct {
-	ID           string           `json:"id"`
-	Name         string           `json:"name"`
-	State        string           `json:"state"`
-	User         subscriptionUser `json:"user"`
-	IsDefault    bool             `json:"isDefault"`
-	Tenant       string           `json:"tenantId"`
-	Environment  string           `json:"environmentName"`
-	HomeTenantId string           `json:"homeTenantId"`
-	ManagedBy    []managingTenant `json:"managedByTenants"`
-}
-
-type subscriptionUser struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-}
-
-type managingTenant struct {
-	ID string `json:"tenantId"`
+	Id    string `json:"id"`
+	Name  string `json:"name"`
+	State string `json:"state"`
+	User  struct {
+		Name string `json:"name"`
+		Type string `json:"type"`
+	} `json:"user"`
+	IsDefault    bool   `json:"isDefault"`
+	Tenant       string `json:"tenantId"`
+	Environment  string `json:"environmentName"`
+	HomeTenantId string `json:"homeTenantId"`
+	ManagedBy    []struct {
+		Id string `json:"tenantId"`
+	} `json:"managedByTenants"`
 }
 
 // SubscriptionSlice is a custom sorter for subscriptions

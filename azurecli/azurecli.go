@@ -11,14 +11,14 @@ import (
 // New creates a new CLI instance
 func New(fs afero.Fs) (CLI, error) {
 	// Ensure that the azure cli is installed
-	if !utils.IsCommandInstalled(command) {
+	if !utils.IsCommandInstalled(AZ_COMMAND) {
 		return CLI{}, errors.New("azure cli is not installed. please install it and try again. See here: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli")
 	}
 
 	// Create a new CLI instance
 	cli := CLI{
 		fs:      fs,
-		profile: nil,
+		profile: Profile{},
 		tenants: make([]Tenant, 0),
 	}
 
@@ -52,7 +52,7 @@ func (cli *CLI) Refresh() error {
 func (cli CLI) Login(extraArgs []string) error {
 	args := []string{"login"}
 	args = append(args, extraArgs...)
-	err := utils.ExecuteCommandBare(command, os.Stdout, os.Stderr, args...)
+	err := utils.ExecuteCommandBare(AZ_COMMAND, os.Stdout, os.Stderr, args...)
 	if err != nil {
 		return err
 	}

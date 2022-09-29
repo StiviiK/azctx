@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	command      = "az"
-	configDirEnv = "AZURE_CONFIG_DIR"
-	profilesJson = "azureProfile.json"
-	tenantsJson  = "azctxTenants.json"
+	AZ_COMMAND     = "az"
+	CONFIG_DIR_ENV = "AZURE_CONFIG_DIR"
+	PROFILES_JSON  = "azureProfile.json"
+	TENANTS_JSON   = "azctxTenants.json"
 )
 
 var (
@@ -22,15 +22,15 @@ var (
 // ensureConfigDir ensures that the config dir exists
 func ensureConfigDir() (string, error) {
 	// Verify that the AZURE_CONFIG_DIR environment variable is set
-	configDir := os.Getenv(configDirEnv)
+	configDir := os.Getenv(CONFIG_DIR_ENV)
 	if configDir == "" {
-		log.Warn("%s environment variable is not set. Using default config directory.", configDirEnv)
+		log.Warn("%s environment variable is not set. Using default config directory.", CONFIG_DIR_ENV)
 		configDir = defaultConfigDir
 	}
 
 	// Verify that the config dir exists
 	if !utils.FileExists(configDir) {
-		return "", fmt.Errorf("%s (%s) is not a valid directory. Please run `az configure` and try again.", configDirEnv, configDir)
+		return "", fmt.Errorf("%s (%s) is not a valid directory. Please run `az configure` and try again.", CONFIG_DIR_ENV, configDir)
 	}
 
 	return configDir, nil
@@ -45,7 +45,7 @@ func (cli *CLI) readProfile() error {
 	}
 
 	// Verify that the azureProfile.json file exists
-	configFilePath := fmt.Sprintf("%s/%s", configDir, profilesJson)
+	configFilePath := fmt.Sprintf("%s/%s", configDir, PROFILES_JSON)
 	if !utils.FileExists(configFilePath) {
 		return fmt.Errorf("%s is not a valid file. Please run `az configure` and try again.", configFilePath)
 	}
@@ -59,6 +59,7 @@ func (cli *CLI) readProfile() error {
 	// Unmarshal the config file
 	err = utils.ReadJson(configFile, &cli.profile)
 	if err != nil {
+		configFile.Close()
 		return err
 	}
 
@@ -85,6 +86,7 @@ func (cli CLI) writeProfile() error {
 	// Marshal the config file
 	err = utils.WriteJson(configFile, cli.profile)
 	if err != nil {
+		configFile.Close()
 		return err
 	}
 
@@ -102,7 +104,7 @@ func (cli *CLI) readTenants() error {
 	}
 
 	// Verify that the azctxTenants.json file exists
-	configFilePath := fmt.Sprintf("%s/%s", configDir, tenantsJson)
+	configFilePath := fmt.Sprintf("%s/%s", configDir, TENANTS_JSON)
 	if !utils.FileExists(configFilePath) {
 		// ignore if the file does not exist
 		return nil
@@ -117,6 +119,7 @@ func (cli *CLI) readTenants() error {
 	// Unmarshal the config file
 	err = utils.ReadJson(configFile, &cli.tenants)
 	if err != nil {
+		configFile.Close()
 		return err
 	}
 
@@ -133,7 +136,7 @@ func (cli CLI) writeTenants() error {
 	}
 
 	// Open the azctxTenants.json file
-	configFilePath := fmt.Sprintf("%s/%s", configDir, tenantsJson)
+	configFilePath := fmt.Sprintf("%s/%s", configDir, TENANTS_JSON)
 	configFile, err := cli.fs.OpenFile(configFilePath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("%s is not a valid file: %s", configFilePath, err.Error())
@@ -142,6 +145,7 @@ func (cli CLI) writeTenants() error {
 	// Marshal the config file
 	err = utils.WriteJson(configFile, cli.tenants)
 	if err != nil {
+		configFile.Close()
 		return err
 	}
 

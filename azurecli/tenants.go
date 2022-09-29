@@ -23,7 +23,7 @@ func (cli *CLI) UpdateTenants() error {
 		"--output", "json",
 	}
 
-	output, err := utils.ExecuteCommand(command, args...)
+	output, err := utils.ExecuteCommand(AZ_COMMAND, args...)
 	if err != nil {
 		return err
 	}

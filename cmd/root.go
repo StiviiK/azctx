@@ -99,7 +99,7 @@ func interactivelySelectSubscription(cli azurecli.CLI) error {
 
 	// Set the selected subscription as the default
 	subscriptions := cli.Subscriptions()
-	log.Info("Setting active subscription to %s (%s)", subscriptions[idx].Name, subscriptions[idx].ID)
+	log.Info("Setting active subscription to %s (%s)", subscriptions[idx].Name, subscriptions[idx].Id)
 	err = cli.SetSubscription(subscriptions[idx])
 	if err != nil {
 		return err
@@ -109,7 +109,6 @@ func interactivelySelectSubscription(cli azurecli.CLI) error {
 }
 
 func selectSubscriptionByName(cli azurecli.CLI, name string) error {
-	log.Info(name)
 	subscriptions, err := cli.TryFindSubscription(name)
 	if err != nil {
 		return err
@@ -133,7 +132,7 @@ func selectSubscriptionByName(cli azurecli.CLI, name string) error {
 	}
 
 	// Set the selected subscription as the default
-	log.Info("Setting active subscription to %s (%s)", subscription.Name, subscription.ID)
+	log.Info("Setting active subscription to %s (%s)", subscription.Name, subscription.Id)
 	err = cli.SetSubscription(subscription)
 	if err != nil {
 		return err
@@ -150,7 +149,7 @@ func getActiveSubscription(cli azurecli.CLI) error {
 	}
 
 	// Print the active subscription
-	log.Info("Active subscription: %s (%s)", subscription.Name, subscription.ID)
+	log.Info("Active subscription: %s (%s)", subscription.Name, subscription.Id)
 
 	return nil
 }

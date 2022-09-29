@@ -36,7 +36,7 @@ func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
 		Searcher: func(input string, index int) bool {
 			return fuzzy.MatchNormalized(strings.ToLower(input), strings.ToLower(subscriptionNames[index]))
 		},
-		Size:   int(utils.Min(len(subscriptions), 10)),
+		Size:   utils.Min(len(subscriptions), 10),
 		Stdout: utils.NoBellStdout,
 	}
 }
