@@ -43,7 +43,7 @@ func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
 
 // buildItemTemplate builds the item template
 func builItemTemplate(maxSubscriptionsLength, maxTenantsLength int, additionalStyle string) string {
-	return fmt.Sprintf("  {{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }} | {{ repeat 36 \" \" | print .ID | trunc 36 | cyan | %[3]s }} | {{ repeat %[2]d \" \" | print .Tenant | trunc %[2]d | faint | %[3]s }} |", maxSubscriptionsLength, maxTenantsLength, additionalStyle)
+	return fmt.Sprintf("  {{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }} | {{ repeat 36 \" \" | print .Id | trunc 36 | cyan | %[3]s }} | {{ repeat %[2]d \" \" | print .Tenant | trunc %[2]d | faint | %[3]s }} |", maxSubscriptionsLength, maxTenantsLength, additionalStyle)
 }
 
 func newTemplateFuncMap() template.FuncMap {
