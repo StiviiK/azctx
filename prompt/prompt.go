@@ -1,9 +1,6 @@
 package prompt
 
 import (
-	"embed"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"sort"
@@ -17,26 +14,13 @@ import (
 )
 
 var (
-	//go:embed templates/*.json
-	templates embed.FS
-
 	ShortPrompt bool // Use a short prompt, will be set by the --short flag from the root command
 )
 
 // BuildPrompt builds a prompt for the user to select a subscription
 func BuildPrompt(subscriptions azurecli.SubscriptionSlice) (promptui.Select, error) {
-	// Load the required template
-	tplContent, err := templates.ReadFile(fmt.Sprintf("templates/%s", templateName()))
-	if err != nil {
-		return promptui.Select{}, errors.New("failed to load template: " + err.Error())
-	}
-
-	// Parse the template json file
-	var tpl promptJsonTemplate
-	err = json.Unmarshal(tplContent, &tpl)
-	if err != nil {
-		return promptui.Select{}, errors.New("failed to parse template: " + err.Error())
-	}
+	// Fetch the right template
+	tpl := loadTemplate()
 
 	// Sort the subscriptions by name
 	sort.Sort(subscriptions)
@@ -90,13 +74,4 @@ func tenantNames(subscriptions []azurecli.Subscription) utils.StringSlice {
 	}
 
 	return tenantNames
-}
-
-// templateName returns the name of the template to use
-func templateName() string {
-	if ShortPrompt {
-		return "short.json"
-	}
-
-	return "long.json"
 }
