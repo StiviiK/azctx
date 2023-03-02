@@ -14,7 +14,7 @@ var (
 )
 
 // templateName returns the template to use
-func loadTemplate() promptTemplate {
+func template() promptTemplate {
 	if ShortPrompt {
 		return template_Short
 	}

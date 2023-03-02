@@ -2,9 +2,9 @@ package prompt
 
 import (
 	"fmt"
-	"html/template"
 	"sort"
 	"strings"
+	templates "text/template"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/StiviiK/azctx/azurecli"
@@ -20,7 +20,7 @@ var (
 // BuildPrompt builds a prompt for the user to select a subscription
 func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
 	// Fetch the right template
-	tpl := loadTemplate()
+	tpl := template()
 
 	// Sort the subscriptions by name
 	sort.Sort(subscriptions)
@@ -53,7 +53,7 @@ func builItemTemplate(template string, maxSubscriptionsLength, maxTenantsLength 
 }
 
 // newTemplateFuncMap builds the template function map
-func newTemplateFuncMap() template.FuncMap {
+func newTemplateFuncMap() templates.FuncMap {
 	ret := sprig.TxtFuncMap()
 	ret["green"] = promptui.Styler(promptui.FGGreen)
 	ret["cyan"] = promptui.Styler(promptui.FGCyan)
