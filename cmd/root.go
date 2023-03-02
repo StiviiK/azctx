@@ -91,10 +91,7 @@ func rootRunE(cmd *cobra.Command, args []string) error {
 
 func interactivelySelectSubscription(cli azurecli.CLI) error {
 	// Ask the user to select a subscription
-	prompt, err := prompt.BuildPrompt(cli.Subscriptions())
-	if err != nil {
-		return err
-	}
+	prompt := prompt.BuildPrompt(cli.Subscriptions())
 
 	// Run the prompt
 	idx, _, err := prompt.Run()
@@ -123,12 +120,8 @@ func selectSubscriptionByName(cli azurecli.CLI, name string) error {
 	var subscription azurecli.Subscription
 	switch length := len(subscriptions); {
 	case length > 1:
-		prompt, err := prompt.BuildPrompt(subscriptions)
-		if err != nil {
-			return err
-		}
-
 		// Run the prompt
+		prompt := prompt.BuildPrompt(subscriptions)
 		idx, _, err := prompt.Run()
 		if err != nil {
 			return nil

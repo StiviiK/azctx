@@ -18,7 +18,7 @@ var (
 )
 
 // BuildPrompt builds a prompt for the user to select a subscription
-func BuildPrompt(subscriptions azurecli.SubscriptionSlice) (promptui.Select, error) {
+func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
 	// Fetch the right template
 	tpl := loadTemplate()
 
@@ -44,7 +44,7 @@ func BuildPrompt(subscriptions azurecli.SubscriptionSlice) (promptui.Select, err
 		},
 		Size:   utils.Min(len(subscriptions), 10),
 		Stdout: utils.NoBellStdout,
-	}, nil
+	}
 }
 
 // buildItemTemplate builds the item template
