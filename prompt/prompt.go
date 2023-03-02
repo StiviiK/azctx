@@ -26,7 +26,7 @@ var (
 // BuildPrompt builds a prompt for the user to select a subscription
 func BuildPrompt(subscriptions azurecli.SubscriptionSlice) (promptui.Select, error) {
 	// Load the required template
-	tplContent, err := templates.ReadFile(fmt.Sprintf("templates/%s", templateName(ShortPrompt)))
+	tplContent, err := templates.ReadFile(fmt.Sprintf("templates/%s", templateName()))
 	if err != nil {
 		return promptui.Select{}, errors.New("failed to load template: " + err.Error())
 	}
@@ -44,7 +44,7 @@ func BuildPrompt(subscriptions azurecli.SubscriptionSlice) (promptui.Select, err
 	// Build the prompt
 	subscriptionNames := utils.StringSlice(subscriptions.SubscriptionNames())
 	maxSubscriptionsLength := subscriptionNames.LongestLength()
-	maxTenantsLength := tenantNames(subscriptions, !ShortPrompt).LongestLength()
+	maxTenantsLength := tenantNames(subscriptions).LongestLength()
 
 	return promptui.Select{
 		Items: subscriptions,
@@ -79,10 +79,10 @@ func newTemplateFuncMap() template.FuncMap {
 }
 
 // tenantNames returns the tenant names of the given subscriptions
-func tenantNames(subscriptions []azurecli.Subscription, includeIds bool) utils.StringSlice {
+func tenantNames(subscriptions []azurecli.Subscription) utils.StringSlice {
 	var tenantNames []string
 	for _, subscription := range subscriptions {
-		if includeIds {
+		if !ShortPrompt {
 			tenantNames = append(tenantNames, fmt.Sprintf("%s (%s)", subscription.TenantName, subscription.Tenant))
 		} else {
 			tenantNames = append(tenantNames, subscription.TenantName)
@@ -93,8 +93,8 @@ func tenantNames(subscriptions []azurecli.Subscription, includeIds bool) utils.S
 }
 
 // templateName returns the name of the template to use
-func templateName(shortPrompt bool) string {
-	if shortPrompt {
+func templateName() string {
+	if ShortPrompt {
 		return "short.json"
 	}
 
