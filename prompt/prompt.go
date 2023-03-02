@@ -50,8 +50,8 @@ func BuildPrompt(subscriptions azurecli.SubscriptionSlice) (promptui.Select, err
 		Items: subscriptions,
 		Templates: &promptui.SelectTemplates{
 			Label:    fmt.Sprintf(tpl.Label, maxSubscriptionsLength, maxTenantsLength),
-			Inactive: builItemTemplate(tpl.Prompt, 2, maxSubscriptionsLength, maxTenantsLength, ""),
-			Active:   "▸ " + builItemTemplate(tpl.Prompt, 0, maxSubscriptionsLength, maxTenantsLength, "bold"),
+			Inactive: builItemTemplate(tpl.Inactive, maxSubscriptionsLength, maxTenantsLength, ""),
+			Active:   builItemTemplate(tpl.Active, maxSubscriptionsLength, maxTenantsLength, "bold"),
 			FuncMap:  newTemplateFuncMap(),
 		},
 		HideSelected: true,
@@ -64,8 +64,8 @@ func BuildPrompt(subscriptions azurecli.SubscriptionSlice) (promptui.Select, err
 }
 
 // buildItemTemplate builds the item template
-func builItemTemplate(template string, prefixSpacesCount, maxSubscriptionsLength, maxTenantsLength int, additionalStyle string) string {
-	return fmt.Sprintf(template, prefixSpacesCount, maxSubscriptionsLength, maxTenantsLength, additionalStyle)
+func builItemTemplate(template string, maxSubscriptionsLength, maxTenantsLength int, additionalStyle string) string {
+	return fmt.Sprintf(template, maxSubscriptionsLength, maxTenantsLength, additionalStyle)
 }
 
 // newTemplateFuncMap builds the template function map

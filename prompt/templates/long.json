@@ -1,5 +1,5 @@
 {
   "label":  "{{ repeat 3 \" \" }} {{ repeat %[1]d \" \" | print \"Name\" | trunc %[1]d }} {{ repeat 38 \" \" | print \"SubscriptionId\" | trunc 38 }} {{ repeat %[2]d \" \" | print \"Tenant\" | trunc %[2]d }}",
-  "prompt": "{{ repeat %[1]d \" \" }}{{ repeat %[2]d \" \" | print .Name | trunc %[2]d | green | %[4]s }} | {{ repeat 36 \" \" | print .Id | trunc 36 | cyan | %[4]s }} | {{ repeat %[3]d \" \" | print \")\" | print .Tenant | print \" (\" | print .TenantName | trunc %[3]d | faint | %[4]s }}"
+  "active": "▸ {{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }} | {{ repeat 36 \" \" | print .Id | trunc 36 | cyan | %[3]s }} | {{ repeat %[2]d \" \" | print \")\" | print .Tenant | print \" (\" | print .TenantName | trunc %[2]d | faint | %[3]s }}",
+  "inactive": "{{ repeat 2 \" \" }}{{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }} | {{ repeat 36 \" \" | print .Id | trunc 36 | cyan | %[3]s }} | {{ repeat %[2]d \" \" | print \")\" | print .Tenant | print \" (\" | print .TenantName | trunc %[2]d | faint | %[3]s }}"
 }
- 
