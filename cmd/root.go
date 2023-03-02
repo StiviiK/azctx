@@ -23,7 +23,7 @@ const (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "azctx [- / NAME]",
+	Use:   "azctx [- / -- NAME]",
 	Short: "azctx is a CLI tool for managing azure cli subscriptions",
 	Long: `azctx is a CLI tool for managing azure cli subscriptions.
 	It is a helper for the azure cli and provides a simple interface for managing subscriptions.
@@ -31,7 +31,6 @@ var rootCmd = &cobra.Command{
 	Pass - to switch to the previous subscription.`,
 	SilenceUsage: true,
 	Run:          utils.WrapCobraCommandHandler(rootRunE),
-	ValidArgs:    []string{"-", "NAME"},
 }
 
 func init() {
@@ -44,6 +43,7 @@ func init() {
 	rootCmd.Flags().BoolP("current", "c", false, "Display the current active subscription")
 	rootCmd.Flags().BoolP("refresh", "r", false, `Re-Authenticate and refresh the subscriptions. 
 	Deprecated. Please use azctx login instead.`)
+	rootCmd.Flags().BoolVar(&prompt.ShortPrompt, "short", false, "Use a short prompt")
 }
 
 func Execute() {
@@ -91,7 +91,12 @@ func rootRunE(cmd *cobra.Command, args []string) error {
 
 func interactivelySelectSubscription(cli azurecli.CLI) error {
 	// Ask the user to select a subscription
-	prompt := prompt.BuildPrompt(cli.Subscriptions())
+	prompt, err := prompt.BuildPrompt(cli.Subscriptions())
+	if err != nil {
+		return err
+	}
+
+	// Run the prompt
 	idx, _, err := prompt.Run()
 	if err != nil {
 		return nil
@@ -118,7 +123,12 @@ func selectSubscriptionByName(cli azurecli.CLI, name string) error {
 	var subscription azurecli.Subscription
 	switch length := len(subscriptions); {
 	case length > 1:
-		prompt := prompt.BuildPrompt(subscriptions)
+		prompt, err := prompt.BuildPrompt(subscriptions)
+		if err != nil {
+			return err
+		}
+
+		// Run the prompt
 		idx, _, err := prompt.Run()
 		if err != nil {
 			return nil

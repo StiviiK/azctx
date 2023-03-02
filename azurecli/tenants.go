@@ -62,8 +62,11 @@ func (cli *CLI) MapTenantIdsToNames() {
 		// Rewrite the tenant ids to the tenant names
 		for i, subscription := range cli.profile.Subscriptions {
 			if tenantName, ok := tenantMap[subscription.Tenant]; ok {
-				cli.profile.Subscriptions[i].Tenant = fmt.Sprintf("%s (%s)", tenantName, subscription.Tenant)
+				cli.profile.Subscriptions[i].TenantName = tenantName
+				continue
 			}
+
+			cli.profile.Subscriptions[i].TenantName = subscription.Tenant
 		}
 	} else {
 		log.Info("If you want to fetch the tenant names, please authenticate the azure cli again using the wraper command: `azctx login`.")

@@ -90,11 +90,12 @@ func (a SubscriptionSlice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a SubscriptionSlice) Less(i, j int) bool {
 	subA, subB := a[i], a[j]
 
-	if subA.Tenant == subB.Tenant {
+	// Sort subscriptions by tenant name and then by subscription name
+	if subA.TenantName == subB.TenantName {
 		return subA.Name < subB.Name
 	}
 
-	return subA.Tenant > subB.Tenant
+	return subA.TenantName < subB.TenantName
 }
 
 // SubscriptionNames returns the names of the given subscriptions

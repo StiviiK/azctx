@@ -32,6 +32,7 @@ type Subscription struct {
 	} `json:"user"`
 	IsDefault    bool   `json:"isDefault"`
 	Tenant       string `json:"tenantId"`
+	TenantName   string `` // This is a duplicate of Tenant, used only for display purposes
 	Environment  string `json:"environmentName"`
 	HomeTenantId string `json:"homeTenantId"`
 	ManagedBy    []struct {

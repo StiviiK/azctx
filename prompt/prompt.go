@@ -1,10 +1,13 @@
 package prompt
 
 import (
+	"embed"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"html/template"
 	"sort"
 	"strings"
-	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/StiviiK/azctx/azurecli"
@@ -13,23 +16,42 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+var (
+	//go:embed templates/*.json
+	templates embed.FS
+
+	ShortPrompt bool // Use a short prompt, will be set by the --short flag from the root command
+)
+
 // BuildPrompt builds a prompt for the user to select a subscription
-func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
+func BuildPrompt(subscriptions azurecli.SubscriptionSlice) (promptui.Select, error) {
+	// Load the required template
+	tplContent, err := templates.ReadFile(fmt.Sprintf("templates/%s", templateName(ShortPrompt)))
+	if err != nil {
+		return promptui.Select{}, errors.New("failed to load template: " + err.Error())
+	}
+
+	// Parse the template json file
+	var tpl promptJsonTemplate
+	err = json.Unmarshal(tplContent, &tpl)
+	if err != nil {
+		return promptui.Select{}, errors.New("failed to parse template: " + err.Error())
+	}
+
 	// Sort the subscriptions by name
 	sort.Sort(subscriptions)
 
 	// Build the prompt
 	subscriptionNames := utils.StringSlice(subscriptions.SubscriptionNames())
 	maxSubscriptionsLength := subscriptionNames.LongestLength()
-	maxTenantsLength := tenantNames(subscriptions).LongestLength()
+	maxTenantsLength := tenantNames(subscriptions, !ShortPrompt).LongestLength()
 
 	return promptui.Select{
-		Label: fmt.Sprint("Name" + strings.Repeat(" ", maxSubscriptionsLength-4) + " | " + "SubscriptionId" + strings.Repeat(" ", 36-14) + " | " + "Tenant" + strings.Repeat(" ", maxTenantsLength-6)),
 		Items: subscriptions,
 		Templates: &promptui.SelectTemplates{
-			Label:    "{{ \" \" | repeat 4 }}{{ . }} |",
-			Inactive: builItemTemplate(maxSubscriptionsLength, maxTenantsLength, ""),
-			Active:   "▸ " + builItemTemplate(maxSubscriptionsLength, maxTenantsLength, "bold")[2:],
+			Label:    fmt.Sprintf(tpl.Label, maxSubscriptionsLength, maxTenantsLength),
+			Inactive: builItemTemplate(tpl.Prompt, 2, maxSubscriptionsLength, maxTenantsLength, ""),
+			Active:   "▸ " + builItemTemplate(tpl.Prompt, 0, maxSubscriptionsLength, maxTenantsLength, "bold"),
 			FuncMap:  newTemplateFuncMap(),
 		},
 		HideSelected: true,
@@ -38,14 +60,15 @@ func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
 		},
 		Size:   utils.Min(len(subscriptions), 10),
 		Stdout: utils.NoBellStdout,
-	}
+	}, nil
 }
 
 // buildItemTemplate builds the item template
-func builItemTemplate(maxSubscriptionsLength, maxTenantsLength int, additionalStyle string) string {
-	return fmt.Sprintf("  {{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }} | {{ repeat 36 \" \" | print .Id | trunc 36 | cyan | %[3]s }} | {{ repeat %[2]d \" \" | print .Tenant | trunc %[2]d | faint | %[3]s }} |", maxSubscriptionsLength, maxTenantsLength, additionalStyle)
+func builItemTemplate(template string, prefixSpacesCount, maxSubscriptionsLength, maxTenantsLength int, additionalStyle string) string {
+	return fmt.Sprintf(template, prefixSpacesCount, maxSubscriptionsLength, maxTenantsLength, additionalStyle)
 }
 
+// newTemplateFuncMap builds the template function map
 func newTemplateFuncMap() template.FuncMap {
 	ret := sprig.TxtFuncMap()
 	ret["green"] = promptui.Styler(promptui.FGGreen)
@@ -55,11 +78,25 @@ func newTemplateFuncMap() template.FuncMap {
 	return ret
 }
 
-func tenantNames(subscriptions []azurecli.Subscription) utils.StringSlice {
+// tenantNames returns the tenant names of the given subscriptions
+func tenantNames(subscriptions []azurecli.Subscription, includeIds bool) utils.StringSlice {
 	var tenantNames []string
 	for _, subscription := range subscriptions {
-		tenantNames = append(tenantNames, subscription.Tenant)
+		if includeIds {
+			tenantNames = append(tenantNames, fmt.Sprintf("%s (%s)", subscription.TenantName, subscription.Tenant))
+		} else {
+			tenantNames = append(tenantNames, subscription.TenantName)
+		}
 	}
 
 	return tenantNames
+}
+
+// templateName returns the name of the template to use
+func templateName(shortPrompt bool) string {
+	if shortPrompt {
+		return "short.json"
+	}
+
+	return "long.json"
 }
