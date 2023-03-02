@@ -1,0 +1,5 @@
+{
+  "label":  "{{ repeat 3 \" \" }} {{ repeat %[1]d \" \" | print \"Name\" | trunc %[1]d }} {{ repeat %[2]d \" \" | print \"Tenant\" | trunc %[2]d }}",
+  "prompt": "{{ repeat %[1]d \" \" }}{{ repeat %[2]d \" \" | print .Name | trunc %[2]d | green | %[4]s }} | {{ repeat %[3]d \" \" | print .TenantName | trunc %[3]d | cyan | %[4]s }}"
+}
+ 
