@@ -43,7 +43,8 @@ func init() {
 	rootCmd.Flags().BoolP("current", "c", false, "Display the current active subscription")
 	rootCmd.Flags().BoolP("refresh", "r", false, `Re-Authenticate and refresh the subscriptions. 
 	Deprecated. Please use azctx login instead.`)
-	rootCmd.Flags().BoolVar(&prompt.ShortPrompt, "short", false, "Use a short prompt")
+	rootCmd.Flags().BoolVarP(&prompt.ShortPrompt, "short", "s", false, "Use a short prompt")
+	rootCmd.Flags().BoolVar(&azurecli.FilterTenantLevelAccount, "filter-tenant-level", true, "Filter tenant level accounts with no available subscriptions")
 }
 
 func Execute() {
@@ -91,7 +92,8 @@ func rootRunE(cmd *cobra.Command, args []string) error {
 
 func interactivelySelectSubscription(cli azurecli.CLI) error {
 	// Ask the user to select a subscription
-	prompt := prompt.BuildPrompt(cli.Subscriptions())
+	subscriptions := cli.Subscriptions()
+	prompt := prompt.BuildPrompt(subscriptions)
 
 	// Run the prompt
 	idx, _, err := prompt.Run()
@@ -100,7 +102,6 @@ func interactivelySelectSubscription(cli azurecli.CLI) error {
 	}
 
 	// Set the selected subscription as the default
-	subscriptions := cli.Subscriptions()
 	log.Info("Setting active subscription to %s (%s)", subscriptions[idx].Name, subscriptions[idx].Id)
 	err = cli.SetSubscription(subscriptions[idx])
 	if err != nil {

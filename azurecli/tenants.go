@@ -60,7 +60,7 @@ func (cli *CLI) MapTenantIdsToNames() {
 		}
 
 		// Rewrite the tenant ids to the tenant names
-		for i, subscription := range cli.profile.Subscriptions {
+		for i, subscription := range cli.Subscriptions() {
 			if tenantName, ok := tenantMap[subscription.Tenant]; ok {
 				cli.profile.Subscriptions[i].TenantName = tenantName
 				continue

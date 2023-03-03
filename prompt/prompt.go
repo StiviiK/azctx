@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ShortPrompt bool // Use a short prompt, will be set by the --short flag from the root command
+	ShortPrompt bool = false // Use a short prompt, will be manipulated by the --short flag in cmd/root.go#L46
 )
 
 // BuildPrompt builds a prompt for the user to select a subscription
@@ -26,7 +26,7 @@ func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
 	sort.Sort(subscriptions)
 
 	// Build the prompt
-	subscriptionNames := utils.StringSlice(subscriptions.SubscriptionNames())
+	subscriptionNames := utils.StringSlice(subscriptions.Names())
 	maxSubscriptionsLength := subscriptionNames.LongestLength()
 	maxTenantsLength := tenantNames(subscriptions).LongestLength()
 
