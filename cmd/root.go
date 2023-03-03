@@ -60,9 +60,6 @@ func rootRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Try to map the tenant ids to names
-	cli.MapTenantIdsToNames()
-
 	// check the flags
 	switch {
 	case cmd.Flags().Changed("current"):

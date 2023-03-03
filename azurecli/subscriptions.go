@@ -92,6 +92,7 @@ func (cli CLI) TryFindSubscription(subscriptionName string) (SubscriptionSlice, 
 	}
 }
 
+// implement sort.Interface for SubscriptionSlice
 func (a SubscriptionSlice) Len() int      { return len(a) }
 func (a SubscriptionSlice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a SubscriptionSlice) Less(i, j int) bool {

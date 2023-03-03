@@ -42,3 +42,5 @@ type Subscription struct {
 
 // SubscriptionSlice is a custom sorter for subscriptions
 type SubscriptionSlice []Subscription
+
+type Slice[T any] []T
