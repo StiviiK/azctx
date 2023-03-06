@@ -9,15 +9,14 @@ import (
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
-var (
-	FilterTenantLevelAccount bool = true // Filter tenant level accounts with no available subscriptions, will be manipulated by the flag --filter-tenant-level in cmd/root.go#L47
-)
+const TENANT_LEVEL_ACCOUNT_NAME = "N/A(tenant level account)"
+
+var FilterTenantLevelAccount bool = true // Filter tenant level accounts with no available subscriptions, will be manipulated by the flag --filter-tenant-level in cmd/root.go#L47
 
 // Subscriptions returns all subscriptions
 func (cli CLI) Subscriptions() utils.ComparableNamedSlice[Subscription] {
-	//return cli.profile.Subscriptions
 	filter := func(s Subscription) bool {
-		return !FilterTenantLevelAccount || !strings.EqualFold(s.Name, "N/A(tenant level account)")
+		return !FilterTenantLevelAccount || !strings.EqualFold(s.Name, TENANT_LEVEL_ACCOUNT_NAME)
 	}
 	return cli.profile.Subscriptions.Filter(filter)
 }
