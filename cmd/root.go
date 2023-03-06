@@ -151,7 +151,7 @@ func getActiveSubscription(cli azurecli.CLI) error {
 	}
 
 	// Print the active subscription
-	log.Info("Active subscription: %s (%s)", subscription.Name, subscription.Id)
+	log.Info("Active subscription: %s/%s (%s/%s)", subscription.TenantName, subscription.Name, subscription.Tenant, subscription.Id)
 
 	return nil
 }
