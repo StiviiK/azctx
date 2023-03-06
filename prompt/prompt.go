@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"text/template"
+	templates "text/template"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/StiviiK/azctx/azurecli"
@@ -13,23 +13,29 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+var (
+	ShortPrompt bool = false // Use a short prompt, will be manipulated by the --short flag in cmd/root.go#L46
+)
+
 // BuildPrompt builds a prompt for the user to select a subscription
-func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
+func BuildPrompt(subscriptions utils.ComparableNamedSlice[azurecli.Subscription]) promptui.Select {
+	// Fetch the correct template
+	tpl := template()
+
 	// Sort the subscriptions by name
 	sort.Sort(subscriptions)
 
 	// Build the prompt
-	subscriptionNames := utils.StringSlice(subscriptions.SubscriptionNames())
+	subscriptionNames := utils.StringSlice(subscriptions.Names())
 	maxSubscriptionsLength := subscriptionNames.LongestLength()
 	maxTenantsLength := tenantNames(subscriptions).LongestLength()
 
 	return promptui.Select{
-		Label: fmt.Sprint("Name" + strings.Repeat(" ", maxSubscriptionsLength-4) + " | " + "SubscriptionId" + strings.Repeat(" ", 36-14) + " | " + "Tenant" + strings.Repeat(" ", maxTenantsLength-6)),
 		Items: subscriptions,
 		Templates: &promptui.SelectTemplates{
-			Label:    "{{ \" \" | repeat 4 }}{{ . }} |",
-			Inactive: builItemTemplate(maxSubscriptionsLength, maxTenantsLength, ""),
-			Active:   "▸ " + builItemTemplate(maxSubscriptionsLength, maxTenantsLength, "bold")[2:],
+			Label:    fmt.Sprintf(tpl.Label, maxSubscriptionsLength, maxTenantsLength),
+			Inactive: builItemTemplate(tpl.Inactive, maxSubscriptionsLength, maxTenantsLength, ""),
+			Active:   builItemTemplate(tpl.Active, maxSubscriptionsLength, maxTenantsLength, "bold"),
 			FuncMap:  newTemplateFuncMap(),
 		},
 		HideSelected: true,
@@ -42,11 +48,12 @@ func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
 }
 
 // buildItemTemplate builds the item template
-func builItemTemplate(maxSubscriptionsLength, maxTenantsLength int, additionalStyle string) string {
-	return fmt.Sprintf("  {{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }} | {{ repeat 36 \" \" | print .Id | trunc 36 | cyan | %[3]s }} | {{ repeat %[2]d \" \" | print .Tenant | trunc %[2]d | faint | %[3]s }} |", maxSubscriptionsLength, maxTenantsLength, additionalStyle)
+func builItemTemplate(template string, maxSubscriptionsLength, maxTenantsLength int, additionalStyle string) string {
+	return fmt.Sprintf(template, maxSubscriptionsLength, maxTenantsLength, additionalStyle)
 }
 
-func newTemplateFuncMap() template.FuncMap {
+// newTemplateFuncMap builds the template function map
+func newTemplateFuncMap() templates.FuncMap {
 	ret := sprig.TxtFuncMap()
 	ret["green"] = promptui.Styler(promptui.FGGreen)
 	ret["cyan"] = promptui.Styler(promptui.FGCyan)
@@ -55,10 +62,15 @@ func newTemplateFuncMap() template.FuncMap {
 	return ret
 }
 
+// tenantNames returns the tenant names of the given subscriptions
 func tenantNames(subscriptions []azurecli.Subscription) utils.StringSlice {
 	var tenantNames []string
 	for _, subscription := range subscriptions {
-		tenantNames = append(tenantNames, subscription.Tenant)
+		if !ShortPrompt {
+			tenantNames = append(tenantNames, fmt.Sprintf("%s (%s)", subscription.TenantName, subscription.Tenant))
+		} else {
+			tenantNames = append(tenantNames, subscription.TenantName)
+		}
 	}
 
 	return tenantNames

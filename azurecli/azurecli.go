@@ -28,6 +28,9 @@ func New(fs afero.Fs) (CLI, error) {
 		return CLI{}, err
 	}
 
+	// Map the tenant ids to the tenant names
+	cli.MapTenantIdsToNames()
+
 	return cli, nil
 }
 

@@ -9,14 +9,21 @@ import (
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
+const TENANT_LEVEL_ACCOUNT_NAME = "N/A(tenant level account)"
+
+var FilterTenantLevelAccount bool = true // Filter tenant level accounts with no available subscriptions, will be manipulated by the flag --filter-tenant-level in cmd/root.go#L47
+
 // Subscriptions returns all subscriptions
-func (cli CLI) Subscriptions() []Subscription {
-	return cli.profile.Subscriptions
+func (cli CLI) Subscriptions() utils.ComparableNamedSlice[Subscription] {
+	filter := func(s Subscription) bool {
+		return !FilterTenantLevelAccount || !strings.EqualFold(s.Name, TENANT_LEVEL_ACCOUNT_NAME)
+	}
+	return cli.profile.Subscriptions.Filter(filter)
 }
 
 // SubscriptionNames returns the names of the given subscriptions
 func (cli CLI) SubscriptionNames() []string {
-	return SubscriptionSlice(cli.profile.Subscriptions).SubscriptionNames()
+	return cli.Subscriptions().Names()
 }
 
 // SetSubscription sets the default subscription in the azure config file
@@ -33,7 +40,7 @@ func (cli *CLI) SetSubscription(subscription Subscription) error {
 // ActiveSubscription returns the active subscription
 func (cli CLI) ActiveSubscription() (Subscription, error) {
 	// select the subscription with the is default flag set to true
-	for _, subscription := range cli.profile.Subscriptions {
+	for _, subscription := range cli.profile.Subscriptions { // Do not use cli.Subscriptions() here, because we want to return the subscription even if it is a tenant level account
 		if subscription.IsDefault {
 			return subscription, nil
 		}
@@ -45,7 +52,7 @@ func (cli CLI) ActiveSubscription() (Subscription, error) {
 // GetSubscriptionByName returns the azure subscription with the given name
 func (cli CLI) GetSubscriptionByName(subscriptionName string) (Subscription, bool) {
 	// Find the subscription with the given name
-	for _, subscription := range cli.profile.Subscriptions {
+	for _, subscription := range cli.Subscriptions() {
 		if strings.EqualFold(subscription.Name, subscriptionName) {
 			return subscription, true
 		}
@@ -55,7 +62,7 @@ func (cli CLI) GetSubscriptionByName(subscriptionName string) (Subscription, boo
 }
 
 // TryFindSubscription fuzzy searches for the azure subscription in the given AzureProfilesConfig
-func (cli CLI) TryFindSubscription(subscriptionName string) ([]Subscription, error) {
+func (cli CLI) TryFindSubscription(subscriptionName string) (utils.ComparableNamedSlice[Subscription], error) {
 	// Fuzzy search for the subscription name
 	subscriptionNames := utils.StringSlice(cli.SubscriptionNames())
 	results := fuzzy.FindNormalized(strings.ToLower(subscriptionName), subscriptionNames.ToLower())
@@ -75,34 +82,11 @@ func (cli CLI) TryFindSubscription(subscriptionName string) ([]Subscription, err
 		// Multiple results found
 		subscriptions := make([]Subscription, 0)
 		for _, result := range results {
-			s, ok := cli.GetSubscriptionByName(result)
-			if ok {
+			if s, ok := cli.GetSubscriptionByName(result); ok {
 				subscriptions = append(subscriptions, s)
 			}
 		}
 
 		return subscriptions, nil
 	}
-}
-
-func (a SubscriptionSlice) Len() int      { return len(a) }
-func (a SubscriptionSlice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a SubscriptionSlice) Less(i, j int) bool {
-	subA, subB := a[i], a[j]
-
-	if subA.Tenant == subB.Tenant {
-		return subA.Name < subB.Name
-	}
-
-	return subA.Tenant > subB.Tenant
-}
-
-// SubscriptionNames returns the names of the given subscriptions
-func (subscriptionSlice SubscriptionSlice) SubscriptionNames() []string {
-	var subscriptionNames []string
-	for _, subscription := range subscriptionSlice {
-		subscriptionNames = append(subscriptionNames, subscription.Name)
-	}
-
-	return subscriptionNames
 }
