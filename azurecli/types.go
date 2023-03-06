@@ -50,7 +50,7 @@ func (s Subscription) Compare(other utils.Comparable) int {
 	// Check if other is a subscription
 	otherSubscription, ok := other.(Subscription)
 	if !ok {
-		return -1
+		panic("other is not a Subscription")
 	}
 
 	// Sort subscriptions by tenant name and then by subscription name
