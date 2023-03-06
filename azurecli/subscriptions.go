@@ -14,16 +14,16 @@ var (
 )
 
 // Subscriptions returns all subscriptions
-func (cli CLI) Subscriptions() SubscriptionSlice {
+func (cli CLI) Subscriptions() utils.ComparableNamedSlice[Subscription] {
 	//return cli.profile.Subscriptions
 	filter := func(s Subscription) bool {
 		return !FilterTenantLevelAccount || !strings.EqualFold(s.Name, "N/A(tenant level account)")
 	}
-	return utils.Filter(cli.profile.Subscriptions, filter)
+	return cli.profile.Subscriptions.Filter(filter)
 }
 
 // SubscriptionNames returns the names of the given subscriptions
-func (cli CLI) SubscriptionNames() utils.StringSlice {
+func (cli CLI) SubscriptionNames() []string {
 	return cli.Subscriptions().Names()
 }
 
@@ -63,9 +63,9 @@ func (cli CLI) GetSubscriptionByName(subscriptionName string) (Subscription, boo
 }
 
 // TryFindSubscription fuzzy searches for the azure subscription in the given AzureProfilesConfig
-func (cli CLI) TryFindSubscription(subscriptionName string) (SubscriptionSlice, error) {
+func (cli CLI) TryFindSubscription(subscriptionName string) (utils.ComparableNamedSlice[Subscription], error) {
 	// Fuzzy search for the subscription name
-	subscriptionNames := cli.SubscriptionNames()
+	subscriptionNames := utils.StringSlice(cli.SubscriptionNames())
 	results := fuzzy.FindNormalized(strings.ToLower(subscriptionName), subscriptionNames.ToLower())
 
 	switch len(results) {
@@ -90,28 +90,4 @@ func (cli CLI) TryFindSubscription(subscriptionName string) (SubscriptionSlice, 
 
 		return subscriptions, nil
 	}
-}
-
-// implement sort.Interface for SubscriptionSlice
-func (a SubscriptionSlice) Len() int      { return len(a) }
-func (a SubscriptionSlice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a SubscriptionSlice) Less(i, j int) bool {
-	subA, subB := a[i], a[j]
-
-	// Sort subscriptions by tenant name and then by subscription name
-	if subA.TenantName == subB.TenantName {
-		return subA.Name < subB.Name
-	}
-
-	return subA.TenantName < subB.TenantName
-}
-
-// Names returns the names of the given subscriptions
-func (subscriptionSlice SubscriptionSlice) Names() []string {
-	var subscriptionNames []string
-	for _, subscription := range subscriptionSlice {
-		subscriptionNames = append(subscriptionNames, subscription.Name)
-	}
-
-	return subscriptionNames
 }

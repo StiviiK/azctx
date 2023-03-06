@@ -18,7 +18,7 @@ var (
 )
 
 // BuildPrompt builds a prompt for the user to select a subscription
-func BuildPrompt(subscriptions azurecli.SubscriptionSlice) promptui.Select {
+func BuildPrompt(subscriptions utils.ComparableNamedSlice[azurecli.Subscription]) promptui.Select {
 	// Fetch the correct template
 	tpl := template()
 
