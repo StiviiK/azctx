@@ -8,6 +8,7 @@ import (
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/StiviiK/azctx/azurecli"
+	"github.com/StiviiK/azctx/log"
 	"github.com/StiviiK/azctx/utils"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
@@ -21,19 +22,30 @@ func BuildPrompt(subscriptions utils.ComparableNamedSlice[azurecli.Subscription]
 	if err != nil {
 		terminalWidth = 100 // Default width
 		terminalHeigth = 20 // Default height
+		log.Warn("Unable to get terminal dimensions, using default values (width: %d, height: %d)", terminalWidth, terminalHeigth)
 	}
-
-	// Fetch the correct template
-	tpl, shortPrompt := template(terminalWidth)
 
 	// Sort the subscriptions by name
 	sort.Sort(subscriptions)
 
-	// Build the prompt
+	// Prepare the prompt
 	subscriptionNames := utils.StringSlice(subscriptions.Names())
 	maxSubscriptionsLength := subscriptionNames.LongestLength()
-	maxTenantsLength := tenantNames(subscriptions, shortPrompt).LongestLength()
+	tenantNames := calculateTenantNames(subscriptions)
+	tenantNamesMaxLength := tenantNames.LongestLength()
 
+	// Fetch the correct template                                                subscriptionId is 36 chars, + 3 for () and a space
+	tpl := template(terminalWidth, maxSubscriptionsLength, tenantNamesMaxLength, tenantNamesMaxLength+36+3)
+
+	// Determine the max length of the tenants
+	maxTenantsLength := 0
+	if tpl.IncludesIds {
+		maxTenantsLength = tenantNamesMaxLength + 36 + 3
+	} else {
+		maxTenantsLength = tenantNamesMaxLength
+	}
+
+	// Return the prompt
 	return promptui.Select{
 		Items: subscriptions,
 		Templates: &promptui.SelectTemplates{
@@ -66,16 +78,11 @@ func newTemplateFuncMap() templates.FuncMap {
 	return ret
 }
 
-// tenantNames returns the tenant names of the given subscriptions
-func tenantNames(subscriptions []azurecli.Subscription, shortPrompt bool) utils.StringSlice {
-	var tenantNames []string
+// calculateTenantNames returns the tenant names of the given subscriptions
+func calculateTenantNames(subscriptions []azurecli.Subscription) (tenantNames utils.StringSlice) {
 	for _, subscription := range subscriptions {
-		if !shortPrompt {
-			tenantNames = append(tenantNames, fmt.Sprintf("%s (%s)", subscription.TenantName, subscription.Tenant))
-		} else {
-			tenantNames = append(tenantNames, subscription.TenantName)
-		}
+		tenantNames = append(tenantNames, subscription.TenantName)
 	}
 
-	return tenantNames
+	return
 }
