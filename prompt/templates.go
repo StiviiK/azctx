@@ -11,13 +11,22 @@ var (
 		Active:   "▸ {{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }} | {{ repeat %[2]d \" \" | print .TenantName | trunc %[2]d | cyan | %[3]s }}",
 		Inactive: "{{ repeat 2 \" \" }}{{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }} | {{ repeat %[2]d \" \" | print .TenantName | trunc %[2]d | cyan | %[3]s }}",
 	}
+	template_VeryShort = promptTemplate{
+		Label:    "{{ repeat 4 \" \" }}{{ repeat %[1]d \" \" | print \"Name\" | trunc %[1]d }}",
+		Active:   "▸ {{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }}",
+		Inactive: "{{ repeat 2 \" \" }}{{ repeat %[1]d \" \" | print .Name | trunc %[1]d | green | %[3]s }}",
+	}
 )
 
-// templateName returns the template to use
-func template() promptTemplate {
-	if ShortPrompt {
-		return template_Short
+// templateName returns the template to use and a boolean indicating if the template is short
+func template(terminalWidth int) (promptTemplate, bool) {
+	// Determine the template based on the terminal width
+	switch {
+	case terminalWidth < 100:
+		return template_VeryShort, true
+	case terminalWidth < 200:
+		return template_Short, true
+	default:
+		return template_Long, false
 	}
-
-	return template_Long
 }

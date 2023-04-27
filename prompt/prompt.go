@@ -11,16 +11,20 @@ import (
 	"github.com/StiviiK/azctx/utils"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
-)
-
-var (
-	ShortPrompt bool = false // Use a short prompt, will be manipulated by the --short flag in cmd/root.go#L46
+	"golang.org/x/term"
 )
 
 // BuildPrompt builds a prompt for the user to select a subscription
 func BuildPrompt(subscriptions utils.ComparableNamedSlice[azurecli.Subscription]) promptui.Select {
+	// Get the terminal dimensions
+	terminalWidth, terminalHeigth, err := term.GetSize(0)
+	if err != nil {
+		terminalWidth = 100 // Default width
+		terminalHeigth = 20 // Default height
+	}
+
 	// Fetch the correct template
-	tpl := template()
+	tpl, shortPrompt := template(terminalWidth)
 
 	// Sort the subscriptions by name
 	sort.Sort(subscriptions)
@@ -28,7 +32,7 @@ func BuildPrompt(subscriptions utils.ComparableNamedSlice[azurecli.Subscription]
 	// Build the prompt
 	subscriptionNames := utils.StringSlice(subscriptions.Names())
 	maxSubscriptionsLength := subscriptionNames.LongestLength()
-	maxTenantsLength := tenantNames(subscriptions).LongestLength()
+	maxTenantsLength := tenantNames(subscriptions, shortPrompt).LongestLength()
 
 	return promptui.Select{
 		Items: subscriptions,
@@ -42,7 +46,7 @@ func BuildPrompt(subscriptions utils.ComparableNamedSlice[azurecli.Subscription]
 		Searcher: func(input string, index int) bool {
 			return fuzzy.MatchNormalized(strings.ToLower(input), strings.ToLower(subscriptionNames[index]))
 		},
-		Size:   utils.Min(len(subscriptions), 10),
+		Size:   utils.Min(len(subscriptions), utils.Max(utils.Min(terminalHeigth-3, 10), 1)),
 		Stdout: utils.NoBellStdout,
 	}
 }
@@ -63,10 +67,10 @@ func newTemplateFuncMap() templates.FuncMap {
 }
 
 // tenantNames returns the tenant names of the given subscriptions
-func tenantNames(subscriptions []azurecli.Subscription) utils.StringSlice {
+func tenantNames(subscriptions []azurecli.Subscription, shortPrompt bool) utils.StringSlice {
 	var tenantNames []string
 	for _, subscription := range subscriptions {
-		if !ShortPrompt {
+		if !shortPrompt {
 			tenantNames = append(tenantNames, fmt.Sprintf("%s (%s)", subscription.TenantName, subscription.Tenant))
 		} else {
 			tenantNames = append(tenantNames, subscription.TenantName)

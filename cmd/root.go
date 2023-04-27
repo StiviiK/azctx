@@ -43,7 +43,8 @@ func init() {
 	rootCmd.Flags().BoolP("current", "c", false, "Display the current active subscription")
 	rootCmd.Flags().BoolP("refresh", "r", false, `Re-Authenticate and refresh the subscriptions. 
 	Deprecated. Please use azctx login instead.`)
-	rootCmd.Flags().BoolVarP(&prompt.ShortPrompt, "short", "s", false, "Use a short prompt")
+	rootCmd.Flags().BoolP("short", "s", false, `Use a short prompt.
+	Deprecated. Size is now automatically determined.`)
 	rootCmd.Flags().BoolVar(&azurecli.FilterTenantLevelAccount, "filter-tenant-level", true, "Filter tenant level accounts with no available subscriptions")
 }
 
@@ -58,6 +59,11 @@ func rootRunE(cmd *cobra.Command, args []string) error {
 	cli, err := azurecli.New(afero.NewOsFs())
 	if err != nil {
 		return err
+	}
+
+	// check deprecated flags
+	if cmd.Flags().Changed("short") {
+		log.Warn("Deprecated flag --short/-s used. Size is now automatically determined.")
 	}
 
 	// check the flags
