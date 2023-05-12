@@ -12,17 +12,22 @@ import (
 	"github.com/StiviiK/azctx/utils"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
-	"golang.org/x/term"
+	"github.com/olekukonko/ts"
 )
 
 // BuildPrompt builds a prompt for the user to select a subscription
 func BuildPrompt(subscriptions utils.ComparableNamedSlice[azurecli.Subscription]) promptui.Select {
 	// Get the terminal dimensions
-	terminalWidth, terminalHeigth, err := term.GetSize(0)
+	var terminalWidth, terminalHeigth int
+	size, err := ts.GetSize()
 	if err != nil {
 		terminalWidth = 100 // Default width
 		terminalHeigth = 20 // Default height
 		log.Warn("Unable to get terminal dimensions, using default values (width: %d, height: %d)", terminalWidth, terminalHeigth)
+	} else {
+		// Set the terminal dimensions
+		terminalWidth = size.Col()
+		terminalHeigth = size.Row()
 	}
 
 	// Sort the subscriptions by name

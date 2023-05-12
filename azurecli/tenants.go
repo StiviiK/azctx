@@ -69,6 +69,6 @@ func (cli *CLI) MapTenantIdsToNames() {
 			cli.profile.Subscriptions[i].TenantName = subscription.Tenant
 		}
 	} else {
-		log.Info("If you want to fetch the tenant names, please authenticate the azure cli again using the wraper command: `azctx login`.")
+		log.Info("If you want to fetch the tenant names, please authenticate the azure cli again using the wraper command: `azctx login`")
 	}
 }
