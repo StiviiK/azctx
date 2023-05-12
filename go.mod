@@ -6,12 +6,12 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/lithammer/fuzzysearch v1.1.5
 	github.com/manifoldco/promptui v0.9.0
+	github.com/olekukonko/ts v0.0.0-20171002115256-78ecb04241c0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/afero v1.9.5
 	github.com/spf13/cobra v1.7.0
 	go.szostok.io/version v1.1.0
 	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53
-	golang.org/x/term v0.7.0
 )
 
 require (
@@ -36,7 +36,6 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/muesli/termenv v0.15.1 // indirect
-	github.com/olekukonko/ts v0.0.0-20171002115256-78ecb04241c0 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
