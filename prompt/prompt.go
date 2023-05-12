@@ -20,9 +20,9 @@ func BuildPrompt(subscriptions utils.ComparableNamedSlice[azurecli.Subscription]
 	// Get the terminal dimensions
 	var terminalWidth, terminalHeigth int
 	if size, err := ts.GetSize(); err != nil {
-		log.Warn("Unable to get terminal dimensions, using default values (width: %d, height: %d)", terminalWidth, terminalHeigth)
 		terminalWidth = 100 // Default width
 		terminalHeigth = 20 // Default height
+		log.Warn("Unable to get terminal dimensions, using default values (width: %d, height: %d)", terminalWidth, terminalHeigth)
 	} else {
 		// Set the terminal dimensions
 		terminalWidth = size.Col()
