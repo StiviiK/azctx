@@ -15,17 +15,19 @@ const (
 	TENANTS_JSON   = "azctxTenants.json"
 )
 
-var (
-	defaultConfigDir = os.Getenv("HOME") + "/.azure"
-)
-
 // ensureConfigDir ensures that the config dir exists
 func ensureConfigDir() (string, error) {
 	// Verify that the AZURE_CONFIG_DIR environment variable is set
 	configDir := os.Getenv(CONFIG_DIR_ENV)
 	if configDir == "" {
 		log.Warn("%s environment variable is not set. Using default config directory.", CONFIG_DIR_ENV)
-		configDir = defaultConfigDir
+
+		// Get the user's home directory
+		userhomeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("could not get user home directory: %s", err.Error())
+		}
+		configDir = fmt.Sprintf("%s/.azure", userhomeDir)
 	}
 
 	// Verify that the config dir exists
