@@ -3,12 +3,14 @@ package cmd
 import (
 	"errors"
 	"os"
+	"time"
 
 	"github.com/StiviiK/azctx/azurecli"
 	"github.com/StiviiK/azctx/log"
 	"github.com/StiviiK/azctx/prompt"
 	"github.com/StiviiK/azctx/updates"
 	"github.com/StiviiK/azctx/utils"
+	"github.com/fatih/color"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"go.szostok.io/version/extension"
@@ -55,6 +57,12 @@ func Execute() {
 }
 
 func rootRunE(cmd *cobra.Command, args []string) error {
+	// Deprecation notice, repository moved to whiteducksoftware/azctx
+	textColor := color.New(color.FgRed).Add(color.Bold).SprintFunc()
+	log.Error(textColor("!!! The azctx repository has moved to https://github.com/whiteducksoftware/azctx. Please update your installation. !!!"))
+	log.Error(textColor("See https://github.com/whiteducksoftware/azctx/blob/main/README.md#migrate-from-stiviik for more information."))
+	time.Sleep(500 * time.Millisecond)
+
 	// Initialize the CLI
 	cli, err := azurecli.New(afero.NewOsFs())
 	if err != nil {
