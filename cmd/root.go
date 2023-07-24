@@ -60,7 +60,7 @@ func rootRunE(cmd *cobra.Command, args []string) error {
 	// Deprecation notice, repository moved to whiteducksoftware/azctx
 	textColor := color.New(color.FgRed).Add(color.Bold).SprintFunc()
 	log.Error(textColor("!!! The azctx repository has moved to https://github.com/whiteducksoftware/azctx. Please update your installation. !!!"))
-	log.Error(textColor("See https://github.com/whiteducksoftware/azctx/blob/main/README.md#migrate-from-stiviik for more information."))
+	log.Error(textColor("See https://github.com/whiteducksoftware/azctx/blob/main/README.md#migrate-from-stiviikazctx for more information."))
 	time.Sleep(500 * time.Millisecond)
 
 	// Initialize the CLI
