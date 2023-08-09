@@ -5,6 +5,8 @@
 ![GitHub stars](https://img.shields.io/github/stars/stiviik/azctx.svg?label=github%20stars)
 ![GitHub contributors](https://img.shields.io/github/contributors/stiviik/azctx.svg?label=github%20contributors)
 
+## NOTE: This repository has been moved, please use the new repository: [whiteducksoftware/azctx](https://github.com/whiteducksoftware/azctx).
+
 **`azctx`** helps you switch between azure cli subscriptions back and forth:
 
 ![azctx demo GIF](assets/img/azctx-demo.png)
